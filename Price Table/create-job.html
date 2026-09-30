@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Job</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/create-job.css">
+</head>
+<body>
+
+<!-- Top navigation -->
+<header class="topnav">
+  <div class="brand">
+    <div class="logo"><span>Blindmatrix</span></div>
+    <b>REQ</b>
+  </div>
+  <nav class="menu">
+    <a href="#">Dashboard</a>
+    <a href="all-job.html">All Job</a>
+    <a href="#">Tasks</a>
+    <a href="#">Calendar</a>
+    <a href="#">Production management</a>
+    <a href="#">Purchase orders</a>
+    <a href="#">More <svg width="11" height="7" viewBox="0 0 11 7"><path d="M0 0h11L5.5 7z" fill="#fff"/></svg></a>
+  </nav>
+  <div class="nav-right">
+    <div class="copilot">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c7cdf5" stroke-width="1.6" stroke-linejoin="round"><path d="M10 3l1.8 5.2L17 10l-5.2 1.8L10 17l-1.8-5.2L3 10l5.2-1.8z"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z"/></svg>
+      Ask BM Copilot <span class="beta">Beta</span>
+    </div>
+    <div class="ic ic-add" id="addBtn" title="Add">
+      <svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 1v14M1 8h14" stroke="#fff" stroke-width="2.6"/></svg>
+      <ul class="add-menu" id="addMenu">
+        <li><a href="create-job.html">+ Job</a></li>
+        <li><a href="#">+ Appointment</a></li>
+        <li><a href="#">+ Account</a></li>
+        <li><a href="#">+ Contact</a></li>
+        <li><a href="#">+ Task</a></li>
+        <li><a href="#">+ Product</a></li>
+      </ul>
+    </div>
+    <div class="ic ic-bell"><svg width="18" height="19" viewBox="0 0 24 24" fill="#fff"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 0 0-5.5-6.84V3a1.5 1.5 0 0 0-3 0v1.16A7 7 0 0 0 5 11v5l-2 2v1h18v-1z"/></svg><span class="badge">35</span></div>
+    <a class="ic ic-settings" href="settings.html" title="Settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.6 7.6 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg></a>
+    <div class="help"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".6" fill="#fff"/></svg>Help &amp; Support</div>
+    <div class="user"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3.2"/><path d="M5.5 19c1.5-2.6 3.8-3.8 6.5-3.8s5 1.2 6.5 3.8"/></svg>Srinath <svg width="12" height="8" viewBox="0 0 12 8" fill="none" stroke="#fff" stroke-width="2"><path d="M1 1.5l5 5 5-5"/></svg></div>
+  </div>
+</header>
+
+<!-- Sub header -->
+<div class="subhead"><h1>Create Job</h1></div>
+
+<div class="job-page">
+
+  <!-- ================= Left: job header, products, contact ================= -->
+  <section class="job-left">
+    <div class="job-head">
+      <span></span><span></span>
+      <label class="jh-lbl" for="jobStatus">Job Status</label>
+      <div class="jh-select">
+        <select id="jobStatus">
+          <option>Agent Quote</option><option>Lead</option><option>Order</option><option>Invoiced</option>
+          <option>Quote Rejected</option><option>Partially paid</option><option>Backorder</option>
+        </select>
+        <svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0h10L5 6z" fill="#fff"/></svg>
+      </div>
+      <label class="jh-lbl" for="jobRef">Job Ref No</label>
+      <input class="jh-input" id="jobRef" autocomplete="off">
+
+      <label class="jh-lbl" for="accountRef">Account Ref</label>
+      <input class="jh-input white" id="accountRef" autocomplete="off">
+      <label class="jh-lbl" for="orderStatus">Order Status</label>
+      <div class="jh-select">
+        <select id="orderStatus"><option>Not confirmed yet</option><option>Confirmed</option><option>On hold</option><option>Cancelled</option></select>
+        <svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0h10L5 6z" fill="#fff"/></svg>
+      </div>
+      <label class="jh-lbl" for="invoiceNo">Invoice No</label>
+      <input class="jh-input" id="invoiceNo" autocomplete="off">
+    </div>
+
+    <div class="job-bar">
+      <div class="ap-wrap">
+        <button type="button" class="jb-btn" id="addProductBtn" aria-haspopup="menu" aria-expanded="false">Add Product <svg width="9" height="6" viewBox="0 0 9 6"><path d="M0 0h9L4.5 6z" fill="#fff"/></svg></button>
+        <!-- Add Product: groups → products -->
+        <div class="ap-menu" id="apMenu" hidden>
+          <div class="ap-search"><input id="apGroupSearch" placeholder="Search groupname" autocomplete="off"><span class="scan-ic" title="Scan"></span></div>
+          <ul class="ap-list" id="apGroups"></ul>
+          <div class="ap-sub" id="apSub" hidden>
+            <div class="ap-search"><input id="apProductSearch" placeholder="Search product" autocomplete="off"></div>
+            <ul class="ap-list ap-products" id="apProducts"></ul>
+            <ul class="ap-list ap-subgroups" id="apSubGroups"></ul>
+            <div class="ap-sub ap-sub2" id="apSub2" hidden><ul class="ap-list" id="apSub2List"></ul></div>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="jb-btn light" id="selectReportBtn" disabled title="Add a product first">Select Report <svg width="9" height="6" viewBox="0 0 9 6"><path d="M0 0h9L4.5 6z" fill="#fff"/></svg></button>
+
+      <button type="button" class="contact-tab" id="contactOpen" aria-controls="contactPanel" aria-expanded="true">Contact Info <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="#fff"/><path d="M3.5 5l2.5 2.5L8.5 5" fill="none" stroke="#12b0e4" stroke-width="1.6"/></svg></button>
+
+      <div class="jb-icons">
+        <button type="button" class="jb-ic" title="Swap"><svg width="15" height="13" viewBox="0 0 15 13" fill="none" stroke="#e5197d" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1 5V4a2 2 0 0 1 2-2h10l-2.5-1.5M14 8v1a2 2 0 0 1-2 2H2l2.5 1.5"/></svg></button>
+        <button type="button" class="jb-ic" title="Online"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#e5197d"/><path d="M1.5 8h13M8 1.2c-2.2 2-2.2 11.6 0 13.6M8 1.2c2.2 2 2.2 11.6 0 13.6M2.6 4.5h10.8M2.6 11.5h10.8" fill="none" stroke="#fff" stroke-width=".9"/></svg></button>
+        <button type="button" class="jb-ic" title="More"><svg width="14" height="4" viewBox="0 0 14 4" fill="#e5197d"><circle cx="2" cy="2" r="1.6"/><circle cx="7" cy="2" r="1.6"/><circle cx="12" cy="2" r="1.6"/></svg></button>
+      </div>
+    </div>
+
+    <div class="job-grid" id="jobGrid">
+      <table class="jt">
+        <colgroup><col style="width:27px"><col style="width:27px"><col style="width:282px"><col style="width:520px"><col style="width:90px"><col style="width:90px"><col style="width:160px"><col style="width:90px"><col style="width:73px"><col style="width:27px"><col style="width:28px"></colgroup>
+        <thead>
+          <tr>
+            <th class="jc-chk"><input type="checkbox" class="jt-chk" id="jobCheckAll" aria-label="Select all products"></th>
+            <th class="jc-exp"><button type="button" class="jt-expall" id="jobExpandAll" title="Expand all"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#e5197d" stroke-width="1.4"><path d="M1 1l3.5 3L8 1M1 5l3.5 3L8 5"/></svg></button></th>
+            <th class="jc-product">Product</th>
+            <th class="jc-desc">Description</th>
+            <th class="jc-num">Cost</th>
+            <th class="jc-num">Qty</th>
+            <th class="jc-unit">Per unit cost price</th>
+            <th class="jc-num">Net</th>
+            <th class="jc-vat">VAT</th>
+            <th class="jc-menu"></th>
+            <th class="jc-set"><span class="jt-set" title="Columns"><svg width="13" height="11" viewBox="0 0 14 12" fill="none" stroke="#e5197d" stroke-width="1.4"><path d="M0 2h14M0 6h14M0 10h14"/><circle cx="9" cy="2" r="1.4" fill="#fff"/><circle cx="4" cy="6" r="1.4" fill="#fff"/><circle cx="10" cy="10" r="1.4" fill="#fff"/></svg></span></th>
+          </tr>
+          <tr class="jt-frow" id="jobFilterRow"></tr>
+        </thead>
+        <tbody id="jobRows"></tbody>
+      </table>
+    </div>
+
+    <!-- Totals: pinned to the bottom of the panel, scrolls sideways with the table -->
+    <div class="job-total" id="jobTotal">
+      <table class="jt jt-foot">
+        <colgroup><col style="width:27px"><col style="width:27px"><col style="width:282px"><col style="width:520px"><col style="width:90px"><col style="width:90px"><col style="width:160px"><col style="width:90px"><col style="width:73px"><col style="width:27px"><col style="width:28px"></colgroup>
+        <tbody>
+          <tr>
+            <td colspan="4" class="jt-total-lbl">Total</td>
+            <td id="totCost">£ 0.00</td>
+            <td id="totQty">0</td>
+            <td id="totUnit">£ 0.00</td>
+            <td id="totNet">£ 0.00</td>
+            <td id="totVat">£ 0.00</td>
+            <td colspan="2"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Contact Info (open by default, covers the products table) -->
+    <div class="contact-panel" id="contactPanel">
+      <div class="contact-scroll">
+        <div class="sec-head">Contact Info</div>
+        <div class="contact-search">
+          <input id="contactSearch" placeholder="Search for Contacts" autocomplete="off" aria-autocomplete="list" aria-controls="contactResults">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.4"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
+          <ul class="contact-results" id="contactResults" hidden></ul>
+        </div>
+
+        <div class="avatar"><svg width="54" height="58" viewBox="0 0 54 58" fill="#1a8fe0"><circle cx="27" cy="15" r="13"/><path d="M2 58c0-16 11-26 25-26s25 10 25 26z"/></svg></div>
+
+        <div class="cf-grid">
+          <label class="cf-lbl" for="cAccountType">Account Type</label>
+          <div class="cf-select"><select id="cAccountType"><option>Domestic</option><option>Contract</option><option>Trade</option><option>Retail</option><option>Commercial</option></select><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0h10L5 6z" fill="#b5b9bd"/></svg></div>
+          <span></span>
+          <label class="cf-lbl" for="cCompany">Company Name</label>
+          <input class="cf-in" id="cCompany" placeholder="Company Name">
+
+          <label class="cf-lbl" for="cFirst">First Name</label>
+          <div class="cf-pair">
+            <div class="cf-select"><select id="cTitle" aria-label="Title"><option value="">Select</option><option>Mr</option><option>Mrs</option><option>Miss</option><option>Ms</option><option>Dr</option></select><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0h10L5 6z" fill="#b5b9bd"/></svg></div>
+            <input class="cf-in" id="cFirst" placeholder="First Name">
+          </div>
+          <span></span>
+          <label class="cf-lbl" for="cLast">Last Name</label>
+          <input class="cf-in" id="cLast" placeholder="Last Name">
+
+          <label class="cf-lbl" for="cEmail">Email</label>
+          <input class="cf-in" id="cEmail" type="email" placeholder="Email">
+          <span></span>
+          <label class="cf-lbl" for="cMobile">Mobile</label>
+          <input class="cf-in" id="cMobile" placeholder="Mobile">
+
+          <label class="cf-lbl" for="cPhone">Phone <sup>*</sup></label>
+          <input class="cf-in" id="cPhone" placeholder="Phone">
+          <span></span>
+          <label class="cf-lbl" for="cAddress1">Address1</label>
+          <textarea class="cf-in cf-ta" id="cAddress1" placeholder="Address1"></textarea>
+
+          <label class="cf-lbl" for="cAddress2">Address2</label>
+          <textarea class="cf-in cf-ta" id="cAddress2" placeholder="Address2"></textarea>
+          <span></span>
+          <label class="cf-lbl" for="cTown">Town / City</label>
+          <input class="cf-in" id="cTown" placeholder="Town / City">
+
+          <label class="cf-lbl" for="cZip">Zipcode / Postcode</label>
+          <div class="cf-icon-in"><input class="cf-in" id="cZip" placeholder="Zipcode / Postcode"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.6"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></div>
+          <span></span>
+          <label class="cf-lbl" for="cState">State / County</label>
+          <input class="cf-in" id="cState" placeholder="State / County">
+
+          <label class="cf-lbl" for="cOrg">Organisation Name</label>
+          <div class="cf-select"><select id="cOrg"><option>Special Blinds(2023)</option><option>Blindmatrix</option></select><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0h10L5 6z" fill="#b5b9bd"/></svg></div>
+          <span></span>
+          <label class="cf-lbl" for="cSource">Source</label>
+          <div class="cf-select"><select id="cSource"><option>Inbound call</option><option>Website</option><option>Referral</option><option>Showroom</option><option>Email</option></select><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0h10L5 6z" fill="#b5b9bd"/></svg></div>
+
+          <label class="cf-lbl" for="cCountry">Country</label>
+          <div class="cf-select"><select id="cCountry"><option>UK</option><option>Ireland</option><option>India</option><option>USA</option></select><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0h10L5 6z" fill="#b5b9bd"/></svg></div>
+          <span></span>
+          <label class="cf-lbl" for="cRole">Role</label>
+          <div class="cf-select"><select id="cRole"><option>Employee</option><option>Owner</option><option>Manager</option></select><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0h10L5 6z" fill="#b5b9bd"/></svg></div>
+
+          <span></span><span></span><span></span>
+          <label class="cf-lbl" for="cCurrency">Currency</label>
+          <div class="cf-select"><select id="cCurrency"><option>£ (UK)</option><option>€ (EUR)</option><option>$ (USD)</option></select><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0h10L5 6z" fill="#b5b9bd"/></svg></div>
+        </div>
+
+        <div class="sec-head">Job Info</div>
+        <div class="cf-grid cf-job">
+          <label class="cf-lbl" for="jCustomerRef">Customer Ref</label>
+          <input class="cf-in" id="jCustomerRef" placeholder="Customer Ref">
+          <span></span>
+          <label class="cf-lbl" for="jAdditionalRef">Additional Ref</label>
+          <input class="cf-in" id="jAdditionalRef" placeholder="Additional Ref">
+
+          <label class="cf-lbl" for="jCreatedBy">Created By</label>
+          <div class="cf-select"><select id="jCreatedBy" disabled><option>Srinath</option></select><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0h10L5 6z" fill="#b5b9bd"/></svg></div>
+          <span></span>
+          <label class="cf-lbl" for="jManager">Account manager <sup>*</sup></label>
+          <div class="cf-select"><select id="jManager"><option value="">Select</option><option>Srinath</option><option>Priya</option><option>Raj</option></select><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0h10L5 6z" fill="#b5b9bd"/></svg></div>
+
+          <label class="cf-lbl" for="jStatusNotes">Status Notes</label>
+          <input class="cf-in" id="jStatusNotes" placeholder="Status Notes">
+        </div>
+      </div>
+
+      <button type="button" class="add-contacts" id="additionalContacts" aria-expanded="false" title="Additional contacts">
+        <span>Additional contacts</span>
+        <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="#fff"/><path d="M7 3.5L4.5 6 7 8.5" fill="none" stroke="#12b0e4" stroke-width="1.6"/></svg>
+      </button>
+      <aside class="add-contacts-panel" id="additionalPanel" hidden>
+        <h4>Additional contacts</h4>
+        <p>No additional contacts yet.</p>
+      </aside>
+
+      <button type="button" class="contact-tab bottom" id="contactClose" aria-controls="contactPanel">Contact Info <svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="#fff"/><path d="M3.5 7l2.5-2.5L8.5 7" fill="none" stroke="#12b0e4" stroke-width="1.6"/></svg></button>
+    </div>
+  </section>
+
+  <!-- ================= Right: dates, price details, activities ================= -->
+  <aside class="job-right">
+    <section class="rcard">
+      <div class="rtabs" role="tablist">
+        <button type="button" class="rtab active" data-tab="dates">Dates</button>
+        <button type="button" class="rtab" data-tab="appointments">Appointments</button>
+        <button type="button" class="rtab" data-tab="tasks">Tasks</button>
+      </div>
+      <div class="rpane" data-pane="dates">
+        <div class="rrow"><label for="dCreated">Created date</label><input class="r-in" id="dCreated" disabled></div>
+        <div class="rrow"><label for="dOrder">Order date</label><input class="r-in" id="dOrder" type="date"></div>
+        <div class="rrow"><label for="dDue">Production due date</label><input class="r-in" id="dDue" type="date"></div>
+        <div class="rrow"><label for="dInvoice">Invoice date</label><input class="r-in white" id="dInvoice" disabled></div>
+        <div class="rrow"><label for="dCompleted">Completed date</label><input class="r-in" id="dCompleted" placeholder="dd-mm-yyyy" disabled></div>
+      </div>
+      <div class="rpane empty" data-pane="appointments" hidden>No Rows To Show</div>
+      <div class="rpane empty" data-pane="tasks" hidden>No Rows To Show</div>
+    </section>
+
+    <section class="rcard">
+      <div class="rtabs" role="tablist">
+        <button type="button" class="rtab active" data-tab="price">Price Details</button>
+        <button type="button" class="rtab" data-tab="invoice">Invoice &amp; Payments</button>
+        <button type="button" class="rtab" data-tab="check">Check List</button>
+      </div>
+      <div class="rpane price-pane" data-pane="price">
+        <div class="prow"><span>Net price</span><span></span><div class="money"><i>£</i><output id="pNet">0.00</output></div></div>
+        <div class="prow"><span>VAT</span><button type="button" class="toggle on-lg" id="vatToggle" aria-pressed="true">ON<span class="knob"></span></button><div class="money"><i>£</i><output id="pVat">0.00</output></div></div>
+        <div class="prow"><span>Gross price</span><span></span><div class="money"><i>£</i><output id="pGross">0.00</output></div></div>
+        <div class="prow sep"><span>Total paid</span><span></span><div class="money"><i>£</i><output id="pPaid">0.00</output></div></div>
+        <div class="prow"><span>Amount outstanding</span><span></span><div class="money"><i>£</i><output id="pOutstanding">0.00</output></div></div>
+      </div>
+      <div class="rpane empty" data-pane="invoice" hidden>No Rows To Show</div>
+      <div class="rpane empty" data-pane="check" hidden>No Rows To Show</div>
+      <div class="rfoot"><button type="button" class="show-more">Show more</button></div>
+    </section>
+
+    <section class="rcard grow">
+      <div class="rtabs" role="tablist">
+        <button type="button" class="rtab active" data-tab="activities">All Activities</button>
+        <button type="button" class="rtab" data-tab="terms">Terms &amp; Conditions</button>
+      </div>
+      <div class="rpane act-pane" data-pane="activities">
+        <div class="subtabs">
+          <button type="button" class="st-arrow" data-scroll="-1" title="Scroll left"><svg width="6" height="10" viewBox="0 0 6 10" fill="none" stroke="#999" stroke-width="1.4"><path d="M5 1L1 5l4 4"/></svg></button>
+          <div class="st-list" id="actTabs">
+            <button type="button" class="st active">All</button><button type="button" class="st">Notes</button><button type="button" class="st">SMS</button><button type="button" class="st">Email</button><button type="button" class="st">Production Notes</button><button type="button" class="st">Attachments</button>
+          </div>
+          <button type="button" class="st-arrow" data-scroll="1" title="Scroll right"><svg width="6" height="10" viewBox="0 0 6 10" fill="none" stroke="#999" stroke-width="1.4"><path d="M1 1l4 4-4 4"/></svg></button>
+        </div>
+        <div class="act-empty">No Rows To Show</div>
+      </div>
+      <div class="rpane empty" data-pane="terms" hidden>No Rows To Show</div>
+      <div class="rfoot"><button type="button" class="show-more light">Show more</button><button type="button" class="r-plus" title="Add activity"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 0v10M0 5h10" stroke="#e5197d" stroke-width="1.6"/></svg></button></div>
+    </section>
+  </aside>
+</div>
+
+<div class="page-foot">
+  <span class="job-msg" id="jobMsg" role="status"></span>
+  <button type="button" class="m-btn m-save" id="jobSave">Save</button>
+  <a class="m-btn m-cancel" href="all-job.html">Cancel</a>
+</div>
+
+<!-- Row "⋮" menu -->
+<div class="row-menu" id="jobRowMenu" hidden>
+  <button type="button" data-row-action="edit">Edit</button>
+  <button type="button" data-row-action="delete">Delete</button>
+</div>
+
+<!-- ================= Product popup (opened from Add Product) — js/job-product.js ================= -->
+<div class="modal-overlay jp-overlay" id="jpModal" hidden>
+  <form class="jp" id="jpForm" novalidate role="dialog" aria-modal="true" aria-labelledby="jpTitle">
+    <div class="jp-tabs" role="tablist">
+      <button type="button" class="jp-tab active" data-jp-tab="info" id="jpTitle">Seq 1 - Roller Blinds Info</button>
+      <button type="button" class="jp-tab" data-jp-tab="production">Production</button>
+    </div>
+    <button type="button" class="modal-close jp-close" data-jp-close title="Close"><svg width="12" height="12" viewBox="0 0 12 12" stroke="#e5197d" stroke-width="2.6" stroke-linecap="round"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
+
+    <div class="jp-body">
+      <div class="jp-main">
+        <div class="jp-pane" data-jp-pane="info">
+          <div class="jp-top">
+            <label for="jpStatus">Product status:</label>
+            <div class="jp-sel small"><select id="jpStatus"><option value="">Select Status</option><option>Measured</option><option>Ordered</option><option>In production</option><option>Fitted</option></select><svg width="8" height="5" viewBox="0 0 8 5"><path d="M0 0h8L4 5z" fill="#b5b9bd"/></svg></div>
+            <div class="jp-scan"><input id="jpScan" placeholder="Scan product" autocomplete="off"><span class="scan-ic"></span></div>
+            <label for="jpRecipe" class="jp-recipe-lbl">Recipe name:</label>
+            <div class="jp-sel small"><select id="jpRecipe" class="bold"><option>Standard</option><option>Premium</option></select><svg width="8" height="5" viewBox="0 0 8 5"><path d="M0 0h8L4 5z" fill="#b5b9bd"/></svg></div>
+            <button type="button" class="ready-toggle" id="jpReady" aria-pressed="false"><span class="knob"></span>Not Ready</button>
+          </div>
+          <div class="jp-grid" id="jpFields"></div>
+        </div>
+        <div class="jp-pane jp-production" data-jp-pane="production" hidden>
+          <table class="jp-prod-table">
+            <thead><tr><th>Stage</th><th>Assigned to</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Cutting</td><td>—</td><td>Not started</td></tr>
+              <tr><td>Assembly</td><td>—</td><td>Not started</td></tr>
+              <tr><td>Quality check</td><td>—</td><td>Not started</td></tr>
+              <tr><td>Packing</td><td>—</td><td>Not started</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <aside class="jp-side">
+        <div class="jp-image" id="jpImage"></div>
+        <div class="jp-thumbs">
+          <button type="button" class="th-arrow" data-thumb="-1" title="Previous"><svg width="7" height="11" viewBox="0 0 7 11" fill="none" stroke="#fff" stroke-width="2"><path d="M6 1L1.5 5.5 6 10"/></svg></button>
+          <div class="th-list" id="jpThumbs"></div>
+          <button type="button" class="th-arrow" data-thumb="1" title="Next"><svg width="7" height="11" viewBox="0 0 7 11" fill="none" stroke="#fff" stroke-width="2"><path d="M1 1l4.5 4.5L1 10"/></svg></button>
+        </div>
+        <div class="jp-card">
+          <button type="button" class="jp-acc open" data-acc="dates"><svg width="9" height="6" viewBox="0 0 9 6"><path d="M0 0h9L4.5 6z" fill="#555"/></svg>Dates</button>
+          <div class="jp-acc-body" data-acc-body="dates">
+            <div class="jp-row"><label for="jpCreated">Created date</label><input class="jp-rin" id="jpCreated" disabled></div>
+            <div class="jp-row"><label for="jpDue">Product due date</label><input class="jp-rin" id="jpDue" type="date"></div>
+          </div>
+          <button type="button" class="jp-acc open" data-acc="price"><svg width="9" height="6" viewBox="0 0 9 6"><path d="M0 0h9L4.5 6z" fill="#555"/></svg>Price details</button>
+          <div class="jp-acc-body" data-acc-body="price">
+            <div class="jp-row"><span>Net price</span><div class="money big"><i>£</i><output id="jpNet">0.00</output></div></div>
+            <div class="jp-row vat-row">
+              <span class="vat-l">VAT <button type="button" class="yn-sm" id="jpVatOn" aria-pressed="true">On<span class="knob"></span></button></span>
+              <div class="jp-sel vat-rate"><select id="jpVatRate"><option value="16">16.000%</option><option value="20">20.000%</option><option value="5">5.000%</option><option value="0">0.000%</option></select><svg width="8" height="5" viewBox="0 0 8 5"><path d="M0 0h8L4 5z" fill="#b5b9bd"/></svg></div>
+              <div class="money big"><i>£</i><output id="jpVat">0.00</output></div>
+            </div>
+            <div class="jp-row"><span>Total gross price</span><div class="money big"><i>£</i><output id="jpGross">0.00</output></div></div>
+            <div class="jp-row">
+              <div class="jp-sel round"><select id="jpRound"><option value="up">Round up to the nearest whole</option><option value="nearest">Round to the nearest whole</option><option value="down">Round down to the nearest whole</option><option value="none">No rounding</option></select><svg width="8" height="5" viewBox="0 0 8 5"><path d="M0 0h8L4 5z" fill="#b5b9bd"/></svg></div>
+              <div class="money big"><i>£</i><output id="jpRounded"></output></div>
+            </div>
+            <div class="jp-row"><label for="jpOverride">Net override 1</label><div class="money big edit"><i>£</i><input id="jpOverride" value="0.00" inputmode="decimal" autocomplete="off"></div></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="jp-foot">
+      <span class="jp-error" id="jpError" role="alert"></span>
+      <div class="split save-split">
+        <button type="submit" class="split-main">Save</button>
+        <button type="button" class="split-caret" id="jpSaveMenuBtn" title="More save options" aria-haspopup="menu"><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0h10L5 6z" fill="#fff"/></svg></button>
+        <div class="pg-menu jp-save-menu" id="jpSaveMenu" role="menu" hidden>
+          <button type="button" role="menuitem" data-save="another">Save and add another</button>
+        </div>
+      </div>
+      <button type="button" class="m-btn m-cancel" id="jpCopy">Copy</button>
+      <button type="button" class="m-btn m-cancel" data-jp-close>Cancel</button>
+    </div>
+  </form>
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/product-store.js"></script>
+<script src="js/create-job.js"></script>
+<script src="js/job-product.js"></script>
+</body>
+</html>
