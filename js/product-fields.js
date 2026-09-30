@@ -34,7 +34,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", "
 function render() {
   rowsEl.innerHTML = fields.map((f, i) => {
     const o = f[7];
-    return `<tr>
+    return `<tr data-row="${i}">
       <td class="c-chk">${o.sys ? "" : `<input type="checkbox" class="chk" data-i="${i}" ${selected.has(i) ? "checked" : ""}>`}</td>
       <td class="c-exp">${canExpand(f) ? `<button class="exp${expanded.has(i) ? " open" : ""}" data-i="${i}" title="${expanded.has(i) ? "Hide" : "Show"} values">${expIcon}</button>` : ""}</td>
       <td class="c-edit" data-i="${i}" title="Edit field">${esc(f[0])}</td>
@@ -45,7 +45,7 @@ function render() {
       <td>${toggle(f[5], i, 5, o.mobLock)}</td>
       <td>${toggle(f[6], i, 6)}</td>
       <td class="c-menu">${o.sys ? "" : `<button class="kebab${menuRow === i ? " active" : ""}" data-i="${i}" title="Actions"><i></i><i></i><i></i></button>`}</td>
-      <td class="c-grid">${gridIcon}</td>
+      <td class="c-grid"><button type="button" class="drag-handle" data-i="${i}" title="Drag to move" aria-label="Move ${esc(f[0])} (arrow up / down)">${gridIcon}</button></td>
     </tr>${expanded.has(i) && canExpand(f) ? fieldValuesPanel(f, i) : ""}`;
   }).join("");
   const selectable = fields.map((f, i) => i).filter(i => !fields[i][7].sys);
@@ -161,6 +161,87 @@ rowsEl.addEventListener("keydown", e => {
   e.target.classList.remove("invalid");
   if (e.key === "Enter") { e.preventDefault(); saveFieldValue(+e.target.dataset.fv, e.target.closest(".fv-panel")); }
   if (e.key === "Escape") { e.stopPropagation(); fvAdding.delete(fields[+e.target.dataset.fv][0]); render(); }
+});
+
+// ---------- Drag rows to change the order (grid icon = handle) ----------
+// The order here is the order of the fields in the Create Job product popup.
+function moveField(from, to) {
+  if (from === to || to < 0 || to >= fields.length) return;
+  const order = fields.map((_, k) => k);
+  const [f] = fields.splice(from, 1);
+  order.splice(from, 1);
+  fields.splice(to, 0, f);
+  order.splice(to, 0, from);
+  // row selections / open value panels follow their field
+  const remap = set => { const old = new Set(set); set.clear(); order.forEach((oldIdx, newIdx) => { if (old.has(oldIdx)) set.add(newIdx); }); };
+  remap(selected);
+  remap(expanded);
+  if (menuRow !== null) { menuRow = null; rowMenu.hidden = true; }
+  render();
+}
+
+let dragFrom = null;
+const mainRow = el => {
+  let tr = el && el.closest ? el.closest("tr") : null;
+  while (tr && tr.dataset.row === undefined) tr = tr.previousElementSibling; // a value panel belongs to the row above
+  return tr && rowsEl.contains(tr) ? tr : null;
+};
+const clearDropMarks = () => rowsEl.querySelectorAll(".drop-before, .drop-after").forEach(tr => tr.classList.remove("drop-before", "drop-after"));
+
+// only the handle starts a drag, so text in the row can still be selected / clicked
+rowsEl.addEventListener("pointerdown", e => {
+  const h = e.target.closest(".drag-handle");
+  if (h) h.closest("tr").draggable = true;
+});
+rowsEl.addEventListener("dragstart", e => {
+  const tr = e.target.closest && e.target.closest("tr[data-row]");
+  if (!tr || !tr.draggable) { e.preventDefault(); return; }
+  dragFrom = Number(tr.dataset.row);
+  tr.classList.add("dragging");
+  e.dataTransfer.effectAllowed = "move";
+  e.dataTransfer.setData("text/plain", String(dragFrom));
+});
+rowsEl.addEventListener("dragover", e => {
+  if (dragFrom === null) return;
+  const tr = mainRow(e.target);
+  if (!tr) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "move";
+  const r = tr.getBoundingClientRect();
+  const after = e.clientY > r.top + r.height / 2;
+  clearDropMarks();
+  if (Number(tr.dataset.row) !== dragFrom) tr.classList.add(after ? "drop-after" : "drop-before");
+});
+rowsEl.addEventListener("drop", e => {
+  if (dragFrom === null) return;
+  e.preventDefault();
+  const tr = mainRow(e.target);
+  if (tr) {
+    const target = Number(tr.dataset.row);
+    const after = tr.classList.contains("drop-after");
+    let to = after ? target + 1 : target;
+    if (dragFrom < to) to -= 1; // removing the dragged row shifts the ones below it up
+    moveField(dragFrom, to);
+  }
+  dragFrom = null;
+  clearDropMarks();
+});
+rowsEl.addEventListener("dragend", () => {
+  dragFrom = null;
+  clearDropMarks();
+  rowsEl.querySelectorAll("tr[draggable='true']").forEach(tr => { tr.draggable = false; tr.classList.remove("dragging"); });
+});
+
+// keyboard: focus the handle, then arrow up / down
+rowsEl.addEventListener("keydown", e => {
+  const h = e.target.closest(".drag-handle");
+  if (!h || (e.key !== "ArrowUp" && e.key !== "ArrowDown")) return;
+  e.preventDefault();
+  const from = Number(h.dataset.i);
+  const to = from + (e.key === "ArrowUp" ? -1 : 1);
+  if (to < 0 || to >= fields.length) return;
+  moveField(from, to);
+  rowsEl.querySelector(`.drag-handle[data-i="${to}"]`).focus();
 });
 
 // ---------- Row "⋮" menu: Delete ----------
@@ -342,6 +423,15 @@ document.getElementById("linkedAdd").addEventListener("click", e => {
   linkedMs.toggleList();
 });
 
+// ---------- Supplier filter for the Types popup ----------
+// Suppliers ticked in the field's Supplier box decide what the Types popup shows:
+// only price groups of those suppliers, and only types that have one of them
+// (types with no price groups yet stay visible so prices can be added).
+const pickedSuppliers = () => supplierMs.values();
+const supplierOk = g => { const sel = pickedSuppliers(); return !sel.length || sel.includes(g.supplier); };
+const typeVisible = name => { const groups = valuesOf(name); return !groups.length || groups.some(supplierOk); };
+const supplierText = () => { const sel = pickedSuppliers(); return sel.length ? sel.join(", ") : "All suppliers"; };
+
 // ---------- Types popup (the linked types) ----------
 const catModal = document.getElementById("catModal");
 const catRows = document.getElementById("catRows");
@@ -388,7 +478,7 @@ function valueRows(name) {
   const q = st.q.map(v => v.trim().toLowerCase());
   const rows = valuesOf(name)
     .map((v, i) => ({ v, i }))
-    .filter(({ v }) => VAL_COLS.every((k, c) => !q[c] || v[k].toLowerCase().includes(q[c])));
+    .filter(({ v }) => supplierOk(v) && VAL_COLS.every((k, c) => !q[c] || v[k].toLowerCase().includes(q[c])));
   const addRow = st.adding ? `<tr class="cv-new">
       <td><input class="cv-in" data-field="name" placeholder="Price group name *" maxlength="60" autocomplete="off"></td>
       <td><input class="cv-in" data-field="supplier" placeholder="Supplier *" maxlength="60" autocomplete="off" list="cvSupplierList"></td>
@@ -400,7 +490,7 @@ function valueRows(name) {
         <td class="cv-link">${esc(v.supplier)}</td>
         <td class="cv-act"><button type="button" class="kebab cv-kebab${valMenuKey && valMenuKey.name === name && valMenuKey.i === i ? " active" : ""}" data-i="${i}" title="Actions"><i></i><i></i><i></i></button></td>
       </tr>`).join("")
-    : (st.adding ? "" : `<tr class="cv-empty"><td colspan="3">${q.some(Boolean) ? "No price groups match your search" : "No price groups yet. Click ⋯ to add a new or existing price."}</td></tr>`);
+    : (st.adding ? "" : `<tr class="cv-empty"><td colspan="3">${q.some(Boolean) ? "No price groups match your search" : pickedSuppliers().length ? `No ${esc(supplierText())} price groups yet. Click ⋯ to add a new or existing price.` : "No price groups yet. Click ⋯ to add a new or existing price."}</td></tr>`);
   return addRow + body;
 }
 
@@ -441,14 +531,15 @@ function saveNewValue(name) {
 
 function renderCategories() {
   const q = catSearch.value.trim().toLowerCase();
-  const names = linkedMs.values().filter(n => n.toLowerCase().includes(q));
+  const names = linkedMs.values().filter(n => typeVisible(n) && n.toLowerCase().includes(q));
+  document.getElementById("catFor").textContent = `Supplier: ${supplierText()}`;
   catRows.innerHTML = (names.length
     ? names.map(n => `<tr class="${catExpanded.has(n) ? "cat-open" : ""}">
         <td class="c-exp"><button type="button" class="exp${catExpanded.has(n) ? " open" : ""}" data-name="${esc(n)}" title="${catExpanded.has(n) ? "Hide" : "Show"} values">${expIcon}</button></td>
         <td>${esc(n)}</td>
         <td class="c-menu"><button type="button" class="kebab${catMenuName === n ? " active" : ""}" data-name="${esc(n)}" title="Actions"><i></i><i></i><i></i></button></td>
       </tr>${catExpanded.has(n) ? valuePanel(n) : ""}`).join("")
-    : `<tr class="cat-empty"><td colspan="3">${q ? "No types match your search" : "No types linked yet"}</td></tr>`);
+    : `<tr class="cat-empty"><td colspan="3">${q ? "No types match your search" : linkedMs.values().length ? `No linked types for ${esc(supplierText())}` : "No types linked yet"}</td></tr>`);
   persist();
 }
 
@@ -527,7 +618,7 @@ let etMenuName = null;
 
 const etShown = () => {
   const q = etSearch.value.trim().toLowerCase();
-  return PRODUCT_TYPES.filter(n => n.toLowerCase().includes(q));
+  return PRODUCT_TYPES.filter(n => typeVisible(n) && n.toLowerCase().includes(q));
 };
 
 function renderET() {
@@ -567,6 +658,13 @@ function closeETMenu() {
 }
 
 document.getElementById("catExisting").addEventListener("click", openET);
+
+// Save in the Types popup: the linked types are kept with the field (saved when the field is saved)
+document.getElementById("catSave").addEventListener("click", () => {
+  const n = linkedMs.values().length;
+  closeCategories();
+  showToast({ type: "success", title: "Success", message: `${n} type${n === 1 ? "" : "s"} linked. Save the field to keep the changes.`, duration: 4000 });
+});
 etModal.querySelector("[data-et-close]").addEventListener("click", closeET);
 
 etRows.addEventListener("change", e => {
@@ -790,7 +888,7 @@ function openExisting(name) {
   const byKey = new Map();
   Object.entries(CATEGORY_VALUES).forEach(([type, groups]) => groups.forEach(g => {
     const key = pgKey(g);
-    if (have.has(key)) return;
+    if (have.has(key) || !supplierOk(g)) return;
     if (!byKey.has(key)) byKey.set(key, { g, types: [], key });
     const row = byKey.get(key);
     if (!row.types.includes(type)) row.types.push(type);
@@ -924,7 +1022,8 @@ function syncDependents() {
   supplierRow.hidden = !isFilter;
   if (!isFilter) supplierMs.clear();
   productTypeRow.hidden = !(isFilter && supplierMs.values().length);
-  if (productTypeRow.hidden) linkedMs.clear();
+  // keep the linked types while suppliers are being changed; drop them only when the field type changes
+  if (!isFilter) linkedMs.clear();
 }
 fType.addEventListener("change", syncDependents);
 

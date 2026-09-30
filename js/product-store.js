@@ -98,7 +98,7 @@ const ProductStore = (() => {
   }
 
   // Setups saved by earlier versions: type "Pricing group filter" → "Pricing Group Filter", "Blind Type" → "Styles", "Product Type" (Pricing Group) → "Pricing",
-  // and keep the linked fields together as Supplier → Styles → Pricing → Fabric.
+  // and (for those old setups only) put the linked fields together as Supplier → Styles → Pricing → Fabric.
   function migrate(saved) {
     const fields = saved.fields;
     const rename = (f, to) => {
@@ -108,11 +108,14 @@ const ProductStore = (() => {
       }
       f[0] = to;
     };
+    let converted = false;
     fields.forEach(f => {
       if (String(f[2]).toLowerCase() === FILTER_TYPE.toLowerCase()) f[2] = FILTER_TYPE; // was "Pricing group filter"
-      if (f[0] === "Blind Type" && f[2] === FILTER_TYPE) { rename(f, "Styles"); if (f[1] === "BT") f[1] = "ST"; }
-      if (f[0] === "Product Type" && f[2] === "Pricing Group") rename(f, "Pricing");
+      if (f[0] === "Blind Type" && f[2] === FILTER_TYPE) { rename(f, "Styles"); if (f[1] === "BT") f[1] = "ST"; converted = true; }
+      if (f[0] === "Product Type" && f[2] === "Pricing Group") { rename(f, "Pricing"); converted = true; }
     });
+    // rows can be dragged into any order now, so only re-order setups that were just converted
+    if (!converted) return fields;
     const chain = [
       fields.find(f => f[0] === "Styles" && f[2] === FILTER_TYPE),
       fields.find(f => f[0] === "Pricing" && f[2] === "Pricing Group"),
