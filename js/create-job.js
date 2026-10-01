@@ -28,6 +28,12 @@ const PRODUCT_GROUPS = [
   { name: "DMI", products: ["TD77 Doors"] }
 ];
 
+// products created with "+ Product" are listed in their Product Group
+ProductStore.customProducts().forEach(p => {
+  const g = PRODUCT_GROUPS.find(x => x.name.toLowerCase() === String(p.group || "Ungroup products").toLowerCase()) || PRODUCT_GROUPS[0];
+  if (!g.products.some(n => n.toLowerCase() === p.name.toLowerCase())) g.products.unshift(p.name);
+});
+
 // ---------- Job products ----------
 // { product, group, description, cost, qty, unit, net, vat, data }
 const jobItems = [];

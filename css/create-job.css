@@ -325,3 +325,46 @@ thead .jt-chk:checked::after{border-color:var(--cyan-dark)}
 .jp-none{padding:30px 20px;font-size:12.5px;color:#666}
 .jp-none b{color:#222}
 .jp-sel select:disabled,.jp-combo select:disabled{color:#9a9ea3;cursor:not-allowed;background:#f6f7f8}
+
+/* ---------- Fabric picker (Create Job product popup) ---------- */
+.jp-fcombo{position:relative;align-items:stretch}
+.jp-fcombo .fc-select{display:none}
+.fc-input{flex:1;min-width:0;border:none;background:transparent;padding:0 10px;font-family:inherit;font-size:12.5px;color:#222;outline:none}
+.fc-input::placeholder{color:#555}
+.fc-input:disabled{color:#9a9ea3;cursor:not-allowed}
+.fc-input:disabled::placeholder{color:#9a9ea3}
+.jp-fcombo:focus-within{border:1.5px solid var(--cyan)}
+.fc-caret{background:none;border:none;border-left:1px solid var(--field);cursor:pointer;pointer-events:auto}
+.fc-panel{position:fixed;z-index:400;background:#fff;border:1px solid #a9d8ec;border-radius:4px;box-shadow:0 6px 18px rgba(0,0,0,.18);padding:8px 8px 0}
+.fc-panel[hidden]{display:none}
+.fc-grid{height:216px;overflow:auto;border-bottom:1px solid #eef0f2}
+.fc-grid::-webkit-scrollbar{width:6px;height:6px}
+.fc-grid::-webkit-scrollbar-track{background:#e9ecef;border-radius:4px}
+.fc-grid::-webkit-scrollbar-thumb{background:#16b3e8;border-radius:4px}
+/* fixed column widths → wider than the panel, so it scrolls sideways */
+.fc-table{width:max-content;border-collapse:separate;border-spacing:0;table-layout:fixed}
+.fc-table th,.fc-table td{width:125px;max-width:125px}
+.fc-table .fc-name{width:300px;max-width:300px}
+.fc-table .fc-pg{width:230px;max-width:230px}
+.fc-table th{position:sticky;top:0;z-index:1;height:30px;background:var(--cyan-dark,#12b0e4);color:#fff;font-size:13px;font-weight:500;text-align:left;padding:0 10px;border-right:1px solid rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fc-table th.fc-name{padding-left:34px}
+.fc-table td{height:32px;padding:0 10px;font-size:12.5px;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.fc-table td:first-child{padding-left:34px;width:300px;max-width:300px}
+.fc-table td:nth-child(4){width:230px;max-width:230px}
+/* wrap text button, pinned to the right edge of the header */
+.fc-table .fc-tool{width:38px;max-width:38px;padding:0;text-align:center;position:sticky;right:0;border-right:none}
+.fc-table th.fc-tool{z-index:2;background:var(--cyan-dark,#12b0e4)}
+.fc-table td.fc-tool{background:#fff}
+.fc-wrap{width:24px;height:22px;border:none;border-radius:4px;background:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;vertical-align:middle}
+.fc-wrap:hover{box-shadow:0 0 0 2px rgba(255,255,255,.6)}
+.fc-wrap[aria-pressed="true"]{background:#fde4ef;box-shadow:inset 0 0 0 1.5px #e5197d}
+.fc-table.wrap td{white-space:normal;overflow:visible;text-overflow:clip;height:auto;min-height:32px;padding-top:7px;padding-bottom:7px;line-height:1.35;word-break:break-word}
+.fc-table tr:hover td,.fc-table tr.active td{background:#eaf3fb}
+.fc-table tr.current td{background:#e0f2fb;font-weight:500}
+.fc-table tr.oos td{color:#b0383b}
+.fc-oos{font-size:11px;color:#e53935;font-weight:500;margin-left:4px}
+.fc-table tr.fc-empty td{cursor:default;color:#9a9ea3;text-align:center;padding:30px 0;height:auto;background:#fff !important;width:auto;max-width:none}
+.fc-foot{height:46px;display:flex;align-items:center;justify-content:flex-end;padding-right:4px}
+.fc-foot .m-cancel{height:30px}
+.jp-warn{margin-right:auto;display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:#e53935}
+.jp-warn[hidden]{display:none}

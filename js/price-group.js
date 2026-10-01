@@ -202,8 +202,10 @@
     forCategory = category;
     tables = SAMPLE_TABLES.map(n => makeTable(n, "", SAMPLE_PRICES));
     active = 0;
-    const preferred = supplierMs.values()[0];
-    supplierSel.value = SUPPLIERS.includes(preferred) ? preferred : SUPPLIERS[0];
+    const allowed = supplierMs.values().length ? supplierMs.values() : SUPPLIERS;
+    supplierSel.innerHTML = "";
+    allowed.forEach(n => supplierSel.add(new Option(n, n)));
+    supplierSel.value = allowed[0];
     document.querySelectorAll('input[name="pgmScope"]').forEach(r => { r.checked = false; });
     $("adjType").value = "";
     $("adjUnit").textContent = "£";

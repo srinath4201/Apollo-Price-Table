@@ -20,7 +20,11 @@
         { key: "fields-hierarchy", label: "Fields and Values Hierarchy View", href: "#" },
         { key: "edi", label: "EDI Setup View", href: "#" }
       ] },
-    { key: "materials", label: "Materials", href: "#", more: true,
+    { key: "materials", label: "Materials", href: "product-materials.html",
+      sub: [
+        { key: "fabrics", label: "Fabrics", href: "product-materials.html" },
+        { key: "options", label: "Options", href: "#" }
+      ],
       icon: `<svg width="17" height="16" viewBox="0 0 17 16" fill="none" stroke="${S}" stroke-width="1.2" stroke-linejoin="round"><path d="M8.5 1L16 4.8 8.5 8.6 1 4.8z"/><path d="M1 8l7.5 3.8L16 8"/><path d="M1 11.2L8.5 15l7.5-3.8"/></svg>` },
     { key: "price", label: "Price Tables", href: "#",
       icon: `<svg width="17" height="16" viewBox="0 0 17 16" fill="none" stroke="${S}" stroke-width="1.2"><rect x="1" y="1" width="13" height="12" rx="1"/><path d="M1 5h13M1 9h8M5.5 5v8"/><circle cx="13" cy="12" r="3.3" fill="#1c1f3a"/><path d="M13.8 10.6a1 1 0 0 0-1.8.6v2.2h-.7M12 12.4h1.3M11.3 13.4h2.8"/></svg>` },
@@ -35,6 +39,13 @@
     { key: "discounts", label: "Global discounts", href: "#",
       icon: `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="${S}" stroke-width="1.2"><path d="M8 1l1.8 1.3 2.2-.1.7 2.1 1.8 1.3-.7 2.1.7 2.1-1.8 1.3-.7 2.1-2.2-.1L8 15l-1.8-1.3-2.2.1-.7-2.1-1.8-1.3.7-2.1-.7-2.1 1.8-1.3.7-2.1 2.2.1z"/><path d="M5.8 10.2l4.4-4.4"/><circle cx="6" cy="6" r=".7"/><circle cx="10" cy="10" r=".7"/></svg>` }
   ];
+
+  // New product (not saved yet): no Global discounts, "Price Table", and the other pages wait for Save & Next
+  const locked = side.dataset.locked === "1";
+  if (locked) {
+    items.splice(items.findIndex(it => it.key === "discounts"), 1);
+    items.find(it => it.key === "price").label = "Price Table";
+  }
 
   const active = side.dataset.active;
   const activeSub = side.dataset.sub;
@@ -68,6 +79,15 @@
   });
 
   document.getElementById("sideToggle").addEventListener("click", () => side.classList.toggle("collapsed"));
+
+  if (locked) {
+    side.querySelector(".side-menu").addEventListener("click", e => {
+      const a = e.target.closest("a");
+      if (!a || a.closest("li.active")) return;
+      e.preventDefault();
+      if (typeof showToast === "function") showToast({ title: "Error", message: "Save the product first (Save & Next)", duration: 4000 });
+    });
+  }
 
   // Breadcrumb shows the product that was opened
   const crumb = document.getElementById("crumbProduct");

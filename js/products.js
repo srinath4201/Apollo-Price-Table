@@ -1,30 +1,7 @@
-// [product, code, reportCode, category, showInJobForm, backorder, backorderEditable]
+// Products created with "+ Product" (saved in this browser) come first, then the built-in list
 const products = [
-  ["Shutter New","963","","Shutter V2",true,false,false],
-  ["Zebra blinds","1656","","Blinds with fabrics",true,true,false],
-  ["Roller Blinds","197","","Blinds with fabrics",true,true,true],
-  ["Puma S-300 Awning","102","AWN-PS300","Awnings",false,false,true],
-  ["Ecowood Plus Shutter","362","","Shutter",true,false,false],
-  ["Roller TDI","123","","Blinds with fabrics",true,false,false],
-  ["Curtain production","154","","Blinds with fabrics",true,false,false],
-  ["Verticals","721","","Blinds with fabrics",true,false,false],
-  ["Timberlux EDI","700","","Blinds with slats",false,false,false],
-  ["Fauxwood Venetian","692","","Blinds with slats",true,false,false],
-  ["Sunwood EDI","691","","Blinds with slats",true,false,false],
-  ["TD77 Doors","1144","","Blinds with slats",true,false,true],
-  ["Curtain InHouse","099","","Soft Furnishings",true,false,false],
-  ["Romans (Darpan)","988","","Blinds with fabrics",true,true,true],
-  ["Ziptrak Blinds","018","","Blinds with fabrics",true,false,false],
-  ["Одговорите на неколико","199","RB215","Blinds with fabrics",true,true,true],
-  ["Aluminium Venetian (DEC) EDI","6187","","Blinds with slats",true,false,false],
-  ["Verticals (Arena) EDI Old","013","","Blinds with fabrics",true,false,false],
-  ["Excel Roller (DEC) EDI 2024","603","","Blinds with fabrics",true,false,false],
-  ["Easy Fit Roller (Arena) EDI 2025","706","","Blinds with fabrics",true,false,false],
-  ["Alpha test","568","","Awnings",true,false,true],
-  ["Vertical Louvers only","113","","Blinds with fabrics",true,false,false],
-  ["Test product","101","","Blinds with fabrics",true,false,false],
-  ["Roller Blinds TEST","006","","Blinds with fabrics",false,false,false],
-  ["Curtain (Kensington Blinds)","007","","Blinds with fabrics",false,false,false]
+  ...ProductStore.customProducts().map(p => [p.name, p.code, p.report || "", p.category, true, false, true]),
+  ...PRODUCTS
 ];
 
 const rowsEl = document.getElementById("rows");

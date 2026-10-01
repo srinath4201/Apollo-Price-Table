@@ -50,10 +50,9 @@
     const ff = filterField();
     return ff && ff[7].supplier && ff[7].supplier.length ? ff[7].supplier : ProductStore.SUPPLIERS;
   }
+  // Styles (Pricing Group Filter) always lists all its linked types — not filtered by supplier
   function typeOptions(d) {
-    const supplier = firstVal("supplier");
-    const types = d.filter.linkedTypes || [];
-    return supplier ? types.filter(t => groupsOf(t).some(g => g.supplier === supplier)) : types;
+    return [...new Set(d.filter.linkedTypes || [])];
   }
   function pricingOptions() {
     const supplier = firstVal("supplier");
@@ -62,21 +61,51 @@
     const pool = hasTypeField ? groupsOf(type) : Object.values(setup.typeGroups).flat();
     return [...new Set(pool.filter(g => !supplier || g.supplier === supplier).map(g => g.name))];
   }
+  // the product has fabrics set up on Materials → Fabrics
+  const usesMaterials = () => Array.isArray(setup.materials) && setup.materials.length > 0;
+
   function valueOptions(d) {
+    if (d.role === "material" && usesMaterials()) return materialOptions();
     const values = setup.fieldValues[d.name] || [];
     if (d.role !== "material") return values;
-    const pricing = firstVal("pricing");
-    return values.filter(v => !v.priceGroup || v.priceGroup === pricing);
+    // Fabric values from Fields and Values: by price group (Pricing); without Pricing, by type
+    const type = firstVal("ptype"), pricing = firstVal("pricing");
+    if (byRole("pricing").length) return values.filter(v => !pricing || !v.priceGroup || v.priceGroup === pricing);
+    return values.filter(v => !type || !v.type || v.type === type);
+  }
+
+  // Fabric follows Pricing: Supplier / Pricing Group Filter → Pricing → Fabric.
+  // A colour's price groups are its own, or else its fabric's (set on Fields and Values → Fabric).
+  // Without a Pricing field, fabrics follow the type (Pricing Group Filter) and supplier instead.
+  function materialOptions() {
+    const hasPricing = byRole("pricing").length > 0;
+    const supplier = firstVal("supplier"), type = firstVal("ptype"), pricing = firstVal("pricing");
+    const groupsOf = (f, c) => (c && c.priceGroups && c.priceGroups.length ? c.priceGroups : f.priceGroups || []);
+    return setup.materials
+      .filter(f => !supplier || f.supplier === supplier) // price group names repeat across suppliers
+      .flatMap(f => (f.colours.length ? f.colours : [null])
+        .filter(c => hasPricing
+          ? (!pricing || groupsOf(f, c).includes(pricing))
+          : (!c || !type || !c.types.length || c.types.includes(type)))
+        .map(c => ({
+          value: c ? `${f.name} - ${c.name}` : f.name, outOfStock: !!(c && c.hasStock && Number(c.stock) <= 0),
+          fabric: f.name, code: (c && c.code) || f.code || "", colour: c ? c.name : "", description: (c && c.description) || f.description || "",
+          groups: groupsOf(f, c).join(", ")
+        })));
   }
 
   // which upstream choice a dropdown waits for (label shown when it is empty)
   function waitingFor(d) {
-    if (d.role === "ptype" && byRole("supplier").length && !firstVal("supplier")) return byRole("supplier")[0].name;
     if (d.role === "pricing") {
       if (byRole("ptype").length && !firstVal("ptype")) return byRole("ptype")[0].name;
       if (!byRole("ptype").length && byRole("supplier").length && !firstVal("supplier")) return byRole("supplier")[0].name;
     }
-    if (d.role === "material" && byRole("pricing").length && !firstVal("pricing")) return byRole("pricing")[0].name;
+    if (d.role === "material") {
+      // Fabric follows Pricing; without a Pricing field, the type (Pricing Group Filter) or supplier
+      if (byRole("pricing").length) { if (!firstVal("pricing")) return byRole("pricing")[0].name; }
+      else if (byRole("ptype").length && !firstVal("ptype")) return byRole("ptype")[0].name;
+      else if (!byRole("ptype").length && byRole("supplier").length && !firstVal("supplier")) return byRole("supplier")[0].name;
+    }
     return null;
   }
 
@@ -98,10 +127,12 @@
     const opts = wait ? [] : optionsFor(d);
     const blank = d.role === "unit" ? "" :
       `<option value="">${wait ? `Select ${esc(wait)} first` : opts.length ? "Select" : "No options"}</option>`;
-    sel.innerHTML = blank + opts.map(o => `<option value="${esc(o.value)}"${o.outOfStock ? ' data-oos="1"' : ""}>${esc(o.value)}${o.outOfStock ? " (out of stock)" : ""}</option>`).join("");
+    const extra = o => ` data-fabric="${esc(o.fabric ?? o.value)}" data-code="${esc(o.code || "")}" data-colour="${esc(o.colour || "")}" data-desc="${esc(o.description || "")}" data-groups="${esc(o.groups ?? o.priceGroup ?? "")}"`;
+    sel.innerHTML = blank + opts.map(o => `<option value="${esc(o.value)}"${o.outOfStock ? ' data-oos="1"' : ""}${d.role === "material" ? extra(o) : ""}>${esc(o.value)}${o.outOfStock ? " (out of stock)" : ""}</option>`).join("");
     sel.disabled = !!wait;
     sel.value = opts.some(o => o.value === keep) ? keep : (d.role === "unit" ? "mm" : "");
     checkStock(d);
+    if (d.role === "material") syncPicker(d, wait, opts.length);
   }
 
   // out-of-stock message under a value dropdown
@@ -130,7 +161,20 @@
     let control;
     if (d.role === "unit" || d.role === "supplier" || d.role === "ptype" || d.role === "pricing") {
       control = `<div class="jp-sel main"><select id="${d.id}" data-role="${d.role}"></select>${selCaret}</div>`;
-    } else if (d.role === "material" || d.role === "list") {
+    } else if (d.role === "material") {
+      control = `<div class="jp-combo jp-fcombo" data-picker="${d.id}">
+        <select id="${d.id}" data-role="material" class="fc-select" tabindex="-1" aria-hidden="true"></select>
+        <input class="fc-input" id="${d.id}-q" role="combobox" aria-expanded="false" aria-controls="${d.id}-panel" aria-labelledby="${d.id}-lbl" autocomplete="off">
+        <button type="button" class="cb-caret fc-caret" tabindex="-1" aria-label="Show fabrics"><svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="#777" stroke-width="1.4"><path d="M1 1l4 4 4-4"/></svg></button>
+        <div class="fc-panel" id="${d.id}-panel" hidden>
+          <div class="fc-grid"><table class="fc-table">
+            <thead><tr><th class="fc-name">Fabric Name</th><th>Fabric Code</th><th>Description</th><th class="fc-pg">Price Group</th><th>Colour</th>
+              <th class="fc-tool"><button type="button" class="fc-wrap" aria-pressed="false" title="Wrap text" aria-label="Wrap text"><svg width="14" height="12" viewBox="0 0 14 12" fill="none" stroke="#e5197d" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M1 2h12M1 6h10a2 2 0 0 1 0 4H8M1 10h4"/><path d="M9.5 8.5L8 10l1.5 1.5"/></svg></button></th></tr></thead>
+            <tbody></tbody></table></div>
+          <div class="fc-foot"><button type="button" class="m-btn m-cancel fc-cancel">Cancel</button></div>
+        </div>
+      </div>`;
+    } else if (d.role === "list") {
       control = `<div class="jp-combo"><select id="${d.id}" data-role="${d.role}"></select>${comboCaret}</div>`;
     } else if (d.role === "width" || d.role === "drop") {
       control = `<div class="jp-unit"><input class="jp-in" id="${d.id}" data-role="${d.role}" inputmode="decimal" autocomplete="off"><span class="u">mm</span></div>`;
@@ -159,6 +203,129 @@
     const u = firstVal("unit") || "mm";
     fieldsEl.querySelectorAll(".jp-unit .u").forEach(s => { s.textContent = u; });
   }
+
+  // ---------- Fabric picker (table of fabrics for the chosen Pricing) ----------
+  const pickerOf = d => fieldsEl.querySelector(`[data-picker="${d.id}"]`);
+  let openPicker = null; // definition of the fabric field whose table is open
+
+  function syncPicker(d, wait, count) {
+    const box = pickerOf(d);
+    if (!box) return;
+    const input = box.querySelector(".fc-input");
+    const sel = el(d);
+    input.disabled = sel.disabled;
+    input.value = sel.value;
+    input.placeholder = wait ? `Select ${wait} first` : count ? "Select" : "No options";
+    // nothing to offer for the chosen price group
+    const pricing = firstVal("pricing");
+    const warn = $("jpWarn");
+    if (warn) {
+      const empty = !wait && !count && byRole("pricing").length && pricing;
+      warn.hidden = !empty;
+      if (empty) warn.lastChild.textContent = ` No fabric available for the selected price group (${pricing})`;
+    }
+  }
+
+  function renderPicker(d) {
+    const box = pickerOf(d);
+    const q = box.querySelector(".fc-input").value.trim().toLowerCase();
+    const opts = [...el(d).options].filter(o => o.value);
+    const shown = opts.filter(o => !q || [o.dataset.fabric, o.dataset.code, o.dataset.colour, o.dataset.desc, o.dataset.groups].join(" ").toLowerCase().includes(q));
+    box.querySelector("tbody").innerHTML = shown.length
+      ? shown.map(o => `<tr class="${o.value === el(d).value ? "current" : ""}${o.dataset.oos ? " oos" : ""}" data-value="${esc(o.value)}" tabindex="-1">
+          <td title="${esc(o.dataset.fabric)}">${esc(o.dataset.fabric)}</td><td title="${esc(o.dataset.code)}">${esc(o.dataset.code)}</td>
+          <td title="${esc(o.dataset.desc)}">${esc(o.dataset.desc)}</td><td title="${esc(o.dataset.groups)}">${esc(o.dataset.groups)}</td>
+          <td title="${esc(o.dataset.colour)}">${esc(o.dataset.colour)}${o.dataset.oos ? ' <span class="fc-oos">out of stock</span>' : ""}</td><td class="fc-tool"></td></tr>`).join("")
+      : `<tr class="fc-empty"><td colspan="6">${opts.length ? "No fabrics match your search" : "No fabrics for the selected price group"}</td></tr>`;
+  }
+
+  function showPicker(d) {
+    if (el(d).disabled) return;
+    if (openPicker && openPicker !== d) hidePicker(false);
+    const box = pickerOf(d);
+    const panel = box.querySelector(".fc-panel");
+    const input = box.querySelector(".fc-input");
+    if (openPicker !== d) { input.placeholder = el(d).value || "Search fabric"; input.value = ""; }
+    openPicker = d;
+    renderPicker(d);
+    panel.hidden = false;
+    input.setAttribute("aria-expanded", "true");
+    // fixed position so the table is not cut off by the form's scroll area
+    const r = box.getBoundingClientRect();
+    panel.style.left = `${r.left}px`;
+    panel.style.top = `${r.bottom + 2}px`;
+    panel.style.width = `${Math.max(600, r.width)}px`;
+  }
+
+  function hidePicker(restore = true) {
+    if (!openPicker) return;
+    const d = openPicker;
+    const box = pickerOf(d);
+    openPicker = null;
+    if (!box) return;
+    box.querySelector(".fc-panel").hidden = true;
+    const input = box.querySelector(".fc-input");
+    input.setAttribute("aria-expanded", "false");
+    if (restore) syncPicker(d, waitingFor(d), [...el(d).options].filter(o => o.value).length);
+  }
+
+  function choose(d, value) {
+    const sel = el(d);
+    sel.value = value;
+    hidePicker(false);
+    sel.dispatchEvent(new Event("change", { bubbles: true })); // runs the usual checks (stock, price)
+    syncPicker(d, null, [...sel.options].filter(o => o.value).length);
+    pickerOf(d).querySelector(".fc-input").focus();
+  }
+
+  fieldsEl.addEventListener("click", e => {
+    const box = e.target.closest(".jp-fcombo");
+    if (!box) return;
+    const d = defs.find(x => x.id === box.dataset.picker);
+    const row = e.target.closest("tr[data-value]");
+    if (row) { choose(d, row.dataset.value); return; }
+    if (e.target.closest(".fc-cancel")) { hidePicker(); return; }
+    const wrap = e.target.closest(".fc-wrap");
+    if (wrap) {
+      const on = box.querySelector(".fc-table").classList.toggle("wrap");
+      wrap.setAttribute("aria-pressed", String(on));
+      wrap.title = on ? "Show on one line" : "Wrap text";
+      box.querySelector(".fc-input").focus();
+      return;
+    }
+    if (e.target.closest(".fc-caret")) { openPicker === d ? hidePicker() : showPicker(d); box.querySelector(".fc-input").focus(); return; }
+    if (e.target.closest(".fc-input")) showPicker(d);
+  });
+  fieldsEl.addEventListener("input", e => {
+    if (!e.target.classList.contains("fc-input")) return;
+    e.stopPropagation();
+    const d = defs.find(x => x.id === e.target.closest(".jp-fcombo").dataset.picker);
+    if (openPicker !== d) showPicker(d);
+    renderPicker(d);
+  }, true);
+  fieldsEl.addEventListener("keydown", e => {
+    if (!e.target.classList.contains("fc-input")) return;
+    const d = defs.find(x => x.id === e.target.closest(".jp-fcombo").dataset.picker);
+    const rows = [...pickerOf(d).querySelectorAll("tr[data-value]")];
+    const at = rows.findIndex(r => r.classList.contains("active"));
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if (openPicker !== d) { showPicker(d); return; }
+      const next = rows[Math.min(rows.length - 1, Math.max(0, at + (e.key === "ArrowDown" ? 1 : -1)))];
+      rows.forEach(r => r.classList.toggle("active", r === next));
+      if (next) next.scrollIntoView({ block: "nearest" });
+    } else if (e.key === "Enter" && openPicker === d) {
+      e.preventDefault();
+      const pick = rows[at] || (rows.length === 1 ? rows[0] : null);
+      if (pick) choose(d, pick.dataset.value);
+    } else if (e.key === "Escape" && openPicker === d) {
+      e.preventDefault();
+      e.stopPropagation();
+      hidePicker();
+    }
+  });
+  document.addEventListener("click", e => { if (openPicker && !e.target.closest(".jp-fcombo")) hidePicker(); });
+  form.querySelector(".jp-pane").addEventListener("scroll", () => hidePicker());
 
   // ---------- price ----------
   function gridFor(pricing) {
@@ -260,6 +427,7 @@
       }
       el(d).value = v;
       if (SELECT_ROLES.has(d.role)) { checkStock(d); refreshAfter(d.role); }
+      if (d.role === "material") syncPicker(d, waitingFor(d), [...el(d).options].filter(o => o.value).length);
     }));
     syncUnits();
   }
@@ -296,6 +464,7 @@
   }
 
   function closeJobProduct() {
+    hidePicker(false);
     closeSaveMenu();
     modal.hidden = true;
     current = null;
@@ -365,6 +534,7 @@
   modal.querySelectorAll("[data-jp-close]").forEach(b => b.addEventListener("click", closeJobProduct));
   window.addEventListener("keydown", e => {
     if (e.key !== "Escape" || modal.hidden) return;
+    if (openPicker) { e.stopImmediatePropagation(); hidePicker(); return; }
     e.stopImmediatePropagation();
     saveMenu.hidden ? closeJobProduct() : closeSaveMenu();
   }, true);

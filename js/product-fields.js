@@ -9,8 +9,10 @@ const fields = setup.fields;
 const FIELD_VALUES = setup.fieldValues; // field name -> [{ value, priceGroup, outOfStock }]
 const canExpand = f => ProductStore.VALUE_TYPES.has(f[2]); // List / material fields have values
 
+const MATERIALS = setup.materials; // fabrics (Materials → Fabrics), shown under a Fabric field
+
 function persist() {
-  ProductStore.save(PRODUCT_NAME, { fields, productTypes: PRODUCT_TYPES, typeGroups: CATEGORY_VALUES, fieldValues: FIELD_VALUES });
+  ProductStore.save(PRODUCT_NAME, { fields, productTypes: PRODUCT_TYPES, typeGroups: CATEGORY_VALUES, fieldValues: FIELD_VALUES, materials: MATERIALS });
 }
 
 const rowsEl = document.getElementById("rows");
@@ -34,7 +36,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", "
 function render() {
   rowsEl.innerHTML = fields.map((f, i) => {
     const o = f[7];
-    return `<tr>
+    return `<tr data-row="${i}">
       <td class="c-chk">${o.sys ? "" : `<input type="checkbox" class="chk" data-i="${i}" ${selected.has(i) ? "checked" : ""}>`}</td>
       <td class="c-exp">${canExpand(f) ? `<button class="exp${expanded.has(i) ? " open" : ""}" data-i="${i}" title="${expanded.has(i) ? "Hide" : "Show"} values">${expIcon}</button>` : ""}</td>
       <td class="c-edit" data-i="${i}" title="Edit field">${esc(f[0])}</td>
@@ -45,8 +47,8 @@ function render() {
       <td>${toggle(f[5], i, 5, o.mobLock)}</td>
       <td>${toggle(f[6], i, 6)}</td>
       <td class="c-menu">${o.sys ? "" : `<button class="kebab${menuRow === i ? " active" : ""}" data-i="${i}" title="Actions"><i></i><i></i><i></i></button>`}</td>
-      <td class="c-grid">${gridIcon}</td>
-    </tr>${expanded.has(i) && canExpand(f) ? fieldValuesPanel(f, i) : ""}`;
+      <td class="c-grid"><button type="button" class="drag-handle" data-i="${i}" title="Drag to move" aria-label="Move ${esc(f[0])} (arrow up / down)">${gridIcon}</button></td>
+    </tr>${expanded.has(i) && canExpand(f) ? (ProductStore.MATERIAL_TYPES.has(f[2]) ? fabricsPanel(f, i) : fieldValuesPanel(f, i)) : ""}`;
   }).join("");
   const selectable = fields.map((f, i) => i).filter(i => !fields[i][7].sys);
   checkAll.checked = selectable.every(i => selected.has(i));
@@ -54,6 +56,7 @@ function render() {
 }
 
 rowsEl.addEventListener("click", e => {
+  if (e.target.closest(".fb-panel")) return; // fabric table under a Fabric field (handled below)
   const k = e.target.closest(".kebab");
   if (k) {
     const i = Number(k.dataset.i);
@@ -76,7 +79,7 @@ rowsEl.addEventListener("click", e => {
 });
 
 rowsEl.addEventListener("change", e => {
-  if (!e.target.classList.contains("chk")) return;
+  if (!e.target.classList.contains("chk") || e.target.closest(".fb-panel")) return;
   const i = Number(e.target.dataset.i);
   e.target.checked ? selected.add(i) : selected.delete(i);
   render();
@@ -100,25 +103,39 @@ function pgSelect(current, attrs) {
   return `<select ${attrs}><option value="">Any price group</option>${groups.map(g => `<option ${g === current ? "selected" : ""}>${esc(g)}</option>`).join("")}${extra}</select>`;
 }
 
+// types of the Pricing Group Filter field (what a fabric value can be tied to)
+function filterTypes() {
+  const ff = fields.find(x => x[2] === PRICING_FILTER_TYPE);
+  return ff && ff[7].linkedTypes && ff[7].linkedTypes.length ? ff[7].linkedTypes : PRODUCT_TYPES;
+}
+function typeSelect(current, attrs) {
+  const types = filterTypes();
+  const extra = current && !types.includes(current) ? `<option selected>${esc(current)}</option>` : "";
+  return `<select ${attrs}><option value="">Any type</option>${types.map(t => `<option ${t === current ? "selected" : ""}>${esc(t)}</option>`).join("")}${extra}</select>`;
+}
+
 function fieldValuesPanel(f, i) {
   const name = f[0];
   const isMaterial = ProductStore.MATERIAL_TYPES.has(f[2]);
+  const typeCell = (v, k) => isMaterial ? `<td>${typeSelect(v.type || "", `class="fv-sel" data-fv="${i}" data-k="${k}" data-prop="type" aria-label="Type for ${esc(v.value)}"`)}</td>` : "";
   const rows = fvOf(name).map((v, k) => `<tr>
       <td>${esc(v.value)}</td>
+      ${typeCell(v, k)}
       <td>${pgSelect(v.priceGroup, `class="fv-sel" data-fv="${i}" data-k="${k}" data-prop="priceGroup" aria-label="Price group for ${esc(v.value)}"`)}</td>
       <td class="fv-stock"><label><input type="checkbox" data-fv="${i}" data-k="${k}" data-prop="outOfStock" ${v.outOfStock ? "checked" : ""}> Out of stock</label></td>
       <td class="cv-act"><button type="button" class="fv-del" data-fv="${i}" data-k="${k}" title="Delete ${esc(v.value)}"><svg width="9" height="9" viewBox="0 0 9 9" stroke="#e53935" stroke-width="1.8" stroke-linecap="round"><path d="M1 1l7 7M8 1L1 8"/></svg></button></td>
     </tr>`).join("");
   const add = fvAdding.has(name) ? `<tr class="cv-new">
       <td><input class="cv-in fv-new-value" data-fv="${i}" placeholder="${isMaterial ? "Material" : "Value"} *" maxlength="60" autocomplete="off"></td>
+      ${isMaterial ? `<td>${typeSelect("", `class="fv-sel fv-new-type" aria-label="Type"`)}</td>` : ""}
       <td>${pgSelect("", `class="fv-sel fv-new-pg" aria-label="Price group"`)}</td>
       <td class="fv-stock"><label><input type="checkbox" class="fv-new-stock"> Out of stock</label></td>
       <td class="cv-act"><button type="button" class="fv-save" data-fv="${i}" title="Save value"><svg width="11" height="9" viewBox="0 0 11 9" fill="none" stroke="#3f9b23" stroke-width="2"><path d="M1 4.5l3 3L10 1"/></svg></button></td>
     </tr>` : "";
-  const empty = !rows && !add ? `<tr class="cv-empty"><td colspan="4">No values yet. Click + to add one.</td></tr>` : "";
+  const empty = !rows && !add ? `<tr class="cv-empty"><td colspan="${isMaterial ? 5 : 4}">No values yet. Click + to add one.</td></tr>` : "";
   return `<tr class="fv-row"><td colspan="11"><div class="cv-panel fv-panel">
     <table class="cv-table">
-      <thead><tr><th>${isMaterial ? "Material" : "Value"}</th><th>Price Group</th><th>Stock</th>
+      <thead><tr><th>${isMaterial ? "Material" : "Value"}</th>${isMaterial ? "<th>Type</th>" : ""}<th>Price Group</th><th>Stock</th>
         <th class="cv-act"><button type="button" class="fv-add" data-fv="${i}" title="Add value"><svg width="9" height="9" viewBox="0 0 9 9"><path d="M4.5 0v9M0 4.5h9" stroke="#e0147a" stroke-width="1.8"/></svg></button></th></tr></thead>
       <tbody>${add}${rows}${empty}</tbody>
     </table></div></td></tr>`;
@@ -131,7 +148,8 @@ function saveFieldValue(i, panel) {
   const name = fields[i][0];
   const list = fvOf(name);
   if (list.some(v => v.value.toLowerCase() === value.toLowerCase())) { input.classList.add("invalid"); input.title = "Already added"; input.focus(); return; }
-  list.push({ value, priceGroup: panel.querySelector(".fv-new-pg").value, outOfStock: panel.querySelector(".fv-new-stock").checked });
+  const typeSel = panel.querySelector(".fv-new-type");
+  list.push({ value, type: typeSel ? typeSel.value : "", priceGroup: panel.querySelector(".fv-new-pg").value, outOfStock: panel.querySelector(".fv-new-stock").checked });
   fvAdding.delete(name);
   render();
 }
@@ -161,6 +179,87 @@ rowsEl.addEventListener("keydown", e => {
   e.target.classList.remove("invalid");
   if (e.key === "Enter") { e.preventDefault(); saveFieldValue(+e.target.dataset.fv, e.target.closest(".fv-panel")); }
   if (e.key === "Escape") { e.stopPropagation(); fvAdding.delete(fields[+e.target.dataset.fv][0]); render(); }
+});
+
+// ---------- Drag rows to change the order (grid icon = handle) ----------
+// The order here is the order of the fields in the Create Job product popup.
+function moveField(from, to) {
+  if (from === to || to < 0 || to >= fields.length) return;
+  const order = fields.map((_, k) => k);
+  const [f] = fields.splice(from, 1);
+  order.splice(from, 1);
+  fields.splice(to, 0, f);
+  order.splice(to, 0, from);
+  // row selections / open value panels follow their field
+  const remap = set => { const old = new Set(set); set.clear(); order.forEach((oldIdx, newIdx) => { if (old.has(oldIdx)) set.add(newIdx); }); };
+  remap(selected);
+  remap(expanded);
+  if (menuRow !== null) { menuRow = null; rowMenu.hidden = true; }
+  render();
+}
+
+let dragFrom = null;
+const mainRow = el => {
+  let tr = el && el.closest ? el.closest("tr") : null;
+  while (tr && tr.dataset.row === undefined) tr = tr.previousElementSibling; // a value panel belongs to the row above
+  return tr && rowsEl.contains(tr) ? tr : null;
+};
+const clearDropMarks = () => rowsEl.querySelectorAll(".drop-before, .drop-after").forEach(tr => tr.classList.remove("drop-before", "drop-after"));
+
+// only the handle starts a drag, so text in the row can still be selected / clicked
+rowsEl.addEventListener("pointerdown", e => {
+  const h = e.target.closest(".drag-handle");
+  if (h) h.closest("tr").draggable = true;
+});
+rowsEl.addEventListener("dragstart", e => {
+  const tr = e.target.closest && e.target.closest("tr[data-row]");
+  if (!tr || !tr.draggable) { e.preventDefault(); return; }
+  dragFrom = Number(tr.dataset.row);
+  tr.classList.add("dragging");
+  e.dataTransfer.effectAllowed = "move";
+  e.dataTransfer.setData("text/plain", String(dragFrom));
+});
+rowsEl.addEventListener("dragover", e => {
+  if (dragFrom === null) return;
+  const tr = mainRow(e.target);
+  if (!tr) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "move";
+  const r = tr.getBoundingClientRect();
+  const after = e.clientY > r.top + r.height / 2;
+  clearDropMarks();
+  if (Number(tr.dataset.row) !== dragFrom) tr.classList.add(after ? "drop-after" : "drop-before");
+});
+rowsEl.addEventListener("drop", e => {
+  if (dragFrom === null) return;
+  e.preventDefault();
+  const tr = mainRow(e.target);
+  if (tr) {
+    const target = Number(tr.dataset.row);
+    const after = tr.classList.contains("drop-after");
+    let to = after ? target + 1 : target;
+    if (dragFrom < to) to -= 1; // removing the dragged row shifts the ones below it up
+    moveField(dragFrom, to);
+  }
+  dragFrom = null;
+  clearDropMarks();
+});
+rowsEl.addEventListener("dragend", () => {
+  dragFrom = null;
+  clearDropMarks();
+  rowsEl.querySelectorAll("tr[draggable='true']").forEach(tr => { tr.draggable = false; tr.classList.remove("dragging"); });
+});
+
+// keyboard: focus the handle, then arrow up / down
+rowsEl.addEventListener("keydown", e => {
+  const h = e.target.closest(".drag-handle");
+  if (!h || (e.key !== "ArrowUp" && e.key !== "ArrowDown")) return;
+  e.preventDefault();
+  const from = Number(h.dataset.i);
+  const to = from + (e.key === "ArrowUp" ? -1 : 1);
+  if (to < 0 || to >= fields.length) return;
+  moveField(from, to);
+  rowsEl.querySelector(`.drag-handle[data-i="${to}"]`).focus();
 });
 
 // ---------- Row "⋮" menu: Delete ----------
@@ -342,6 +441,15 @@ document.getElementById("linkedAdd").addEventListener("click", e => {
   linkedMs.toggleList();
 });
 
+// ---------- Supplier filter for the Types popup ----------
+// Suppliers ticked in the field's Supplier box decide what the Types popup shows:
+// only price groups of those suppliers, and only types that have one of them
+// (types with no price groups yet stay visible so prices can be added).
+const pickedSuppliers = () => supplierMs.values();
+const supplierOk = g => { const sel = pickedSuppliers(); return !sel.length || sel.includes(g.supplier); };
+const typeVisible = name => { const groups = valuesOf(name); return !groups.length || groups.some(supplierOk); };
+const supplierText = () => { const sel = pickedSuppliers(); return sel.length ? sel.join(", ") : "All suppliers"; };
+
 // ---------- Types popup (the linked types) ----------
 const catModal = document.getElementById("catModal");
 const catRows = document.getElementById("catRows");
@@ -388,7 +496,7 @@ function valueRows(name) {
   const q = st.q.map(v => v.trim().toLowerCase());
   const rows = valuesOf(name)
     .map((v, i) => ({ v, i }))
-    .filter(({ v }) => VAL_COLS.every((k, c) => !q[c] || v[k].toLowerCase().includes(q[c])));
+    .filter(({ v }) => supplierOk(v) && VAL_COLS.every((k, c) => !q[c] || v[k].toLowerCase().includes(q[c])));
   const addRow = st.adding ? `<tr class="cv-new">
       <td><input class="cv-in" data-field="name" placeholder="Price group name *" maxlength="60" autocomplete="off"></td>
       <td><input class="cv-in" data-field="supplier" placeholder="Supplier *" maxlength="60" autocomplete="off" list="cvSupplierList"></td>
@@ -400,7 +508,7 @@ function valueRows(name) {
         <td class="cv-link">${esc(v.supplier)}</td>
         <td class="cv-act"><button type="button" class="kebab cv-kebab${valMenuKey && valMenuKey.name === name && valMenuKey.i === i ? " active" : ""}" data-i="${i}" title="Actions"><i></i><i></i><i></i></button></td>
       </tr>`).join("")
-    : (st.adding ? "" : `<tr class="cv-empty"><td colspan="3">${q.some(Boolean) ? "No price groups match your search" : "No price groups yet. Click ⋯ to add a new or existing price."}</td></tr>`);
+    : (st.adding ? "" : `<tr class="cv-empty"><td colspan="3">${q.some(Boolean) ? "No price groups match your search" : pickedSuppliers().length ? `No ${esc(supplierText())} price groups yet. Click ⋯ to add a new or existing price.` : "No price groups yet. Click ⋯ to add a new or existing price."}</td></tr>`);
   return addRow + body;
 }
 
@@ -441,14 +549,15 @@ function saveNewValue(name) {
 
 function renderCategories() {
   const q = catSearch.value.trim().toLowerCase();
-  const names = linkedMs.values().filter(n => n.toLowerCase().includes(q));
+  const names = linkedMs.values().filter(n => typeVisible(n) && n.toLowerCase().includes(q));
+  document.getElementById("catFor").textContent = `Supplier: ${supplierText()}`;
   catRows.innerHTML = (names.length
     ? names.map(n => `<tr class="${catExpanded.has(n) ? "cat-open" : ""}">
         <td class="c-exp"><button type="button" class="exp${catExpanded.has(n) ? " open" : ""}" data-name="${esc(n)}" title="${catExpanded.has(n) ? "Hide" : "Show"} values">${expIcon}</button></td>
         <td>${esc(n)}</td>
         <td class="c-menu"><button type="button" class="kebab${catMenuName === n ? " active" : ""}" data-name="${esc(n)}" title="Actions"><i></i><i></i><i></i></button></td>
       </tr>${catExpanded.has(n) ? valuePanel(n) : ""}`).join("")
-    : `<tr class="cat-empty"><td colspan="3">${q ? "No types match your search" : "No types linked yet"}</td></tr>`);
+    : `<tr class="cat-empty"><td colspan="3">${q ? "No types match your search" : linkedMs.values().length ? `No linked types for ${esc(supplierText())}` : "No types linked yet"}</td></tr>`);
   persist();
 }
 
@@ -527,7 +636,7 @@ let etMenuName = null;
 
 const etShown = () => {
   const q = etSearch.value.trim().toLowerCase();
-  return PRODUCT_TYPES.filter(n => n.toLowerCase().includes(q));
+  return PRODUCT_TYPES.filter(n => typeVisible(n) && n.toLowerCase().includes(q));
 };
 
 function renderET() {
@@ -567,6 +676,13 @@ function closeETMenu() {
 }
 
 document.getElementById("catExisting").addEventListener("click", openET);
+
+// Save in the Types popup: the linked types are kept with the field (saved when the field is saved)
+document.getElementById("catSave").addEventListener("click", () => {
+  const n = linkedMs.values().length;
+  closeCategories();
+  showToast({ type: "success", title: "Success", message: `${n} type${n === 1 ? "" : "s"} linked. Save the field to keep the changes.`, duration: 4000 });
+});
 etModal.querySelector("[data-et-close]").addEventListener("click", closeET);
 
 etRows.addEventListener("change", e => {
@@ -790,7 +906,7 @@ function openExisting(name) {
   const byKey = new Map();
   Object.entries(CATEGORY_VALUES).forEach(([type, groups]) => groups.forEach(g => {
     const key = pgKey(g);
-    if (have.has(key)) return;
+    if (have.has(key) || !supplierOk(g)) return;
     if (!byKey.has(key)) byKey.set(key, { g, types: [], key });
     const row = byKey.get(key);
     if (!row.types.includes(type)) row.types.push(type);
@@ -924,7 +1040,8 @@ function syncDependents() {
   supplierRow.hidden = !isFilter;
   if (!isFilter) supplierMs.clear();
   productTypeRow.hidden = !(isFilter && supplierMs.values().length);
-  if (productTypeRow.hidden) linkedMs.clear();
+  // keep the linked types while suppliers are being changed; drop them only when the field type changes
+  if (!isFilter) linkedMs.clear();
 }
 fType.addEventListener("change", syncDependents);
 
@@ -1026,8 +1143,15 @@ form.addEventListener("submit", e => {
     isYes(yn.mandatory), isYes(yn.mobile), isYes(yn.jobItem),
     needsFilter ? { ...keep, onlinePortal: isYes(yn.portal), supplier, linkedTypes } : { ...keep, onlinePortal: isYes(yn.portal) }
   ];
-  if (index === null) fields.push(row);
-  else {
+  if (index === null) {
+    // a new Pricing Group Filter sits right after Supplier (Supplier → filter → Pricing → Fabric)
+    const sup = needsFilter ? fields.findIndex(f => f[2] === "Supplier") : -1;
+    if (sup >= 0) {
+      fields.splice(sup + 1, 0, row);
+      const shift = set => { const v = [...set].map(k => (k > sup ? k + 1 : k)); set.clear(); v.forEach(k => set.add(k)); };
+      shift(selected); shift(expanded);
+    } else fields.push(row);
+  } else {
     const oldName = fields[index][0];
     if (oldName !== name && FIELD_VALUES[oldName] && !FIELD_VALUES[name]) {
       FIELD_VALUES[name] = FIELD_VALUES[oldName];
@@ -1037,7 +1161,263 @@ form.addEventListener("submit", e => {
   }
   closeModal();
   render();
-  if (index === null) document.querySelector(".grid").scrollTop = 1e6;
+  if (index === null && !(needsFilter && fields.some(f => f[2] === "Supplier"))) document.querySelector(".grid").scrollTop = 1e6;
 });
+
+// ---------- Fabric field: fabrics and their price groups ----------
+// Expanding a Fabric (material) field lists the product's fabrics (Materials → Fabrics) with the
+// price groups they belong to. Create Job: Supplier / Pricing Group Filter → Pricing → Fabric.
+const fbExpanded = new Set(); // fabric ids showing their colours
+const fbPicked = new Set();   // ticked fabric ids
+const fbUid = p => `${p}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+// a fabric's price groups: its own, plus any set on its colours
+const fabricGroups = fb => [...new Set([...(fb.priceGroups || []), ...fb.colours.flatMap(c => c.priceGroups || [])])];
+const allGroupNames = () => [...new Set(Object.values(CATEGORY_VALUES).flat().map(g => g.name))];
+const pinkChev = `<svg width="9" height="6" viewBox="0 0 9 6" fill="none" stroke="#fff" stroke-width="1.8"><path d="M1 1l3.5 3.5L8 1"/></svg>`;
+
+function fabricsPanel(f, i) {
+  const rows = MATERIALS.map(fb => {
+    const open = fbExpanded.has(fb.id);
+    const groups = fabricGroups(fb).join(", ");
+    const colours = open ? `<tr class="fb-colours"><td colspan="5">${fb.colours.length
+      ? `<table class="fb-ctable"><thead><tr><th>Colour Name</th><th>Colour Code</th><th>Price Groups</th><th>Stock</th></tr></thead><tbody>${fb.colours.map(c => `<tr>
+          <td>${esc(c.name)}</td><td>${esc(c.code || "")}</td><td>${esc((c.priceGroups && c.priceGroups.length ? c.priceGroups : fb.priceGroups || []).join(", ") || "Any")}</td>
+          <td>${c.hasStock ? (Number(c.stock) > 0 ? esc(c.stock) : '<span class="oos">Out of stock</span>') : ""}</td></tr>`).join("")}</tbody></table>`
+      : `<span class="fb-none">No colours yet — add them on Materials → Fabrics.</span>`}</td></tr>` : "";
+    return `<tr data-fid="${esc(fb.id)}">
+        <td class="fb-chk"><input type="checkbox" class="chk fb-cb" value="${esc(fb.id)}" ${fbPicked.has(fb.id) ? "checked" : ""} aria-label="Select ${esc(fb.name)}"></td>
+        <td class="fb-exp"><button type="button" class="fb-x${open ? " open" : ""}" data-fid="${esc(fb.id)}" title="${open ? "Hide" : "Show"} colours">${pinkChev}</button></td>
+        <td title="${esc(fb.name)}${fb.supplier ? ` (${esc(fb.supplier)})` : ""}">${esc(fb.name)}</td>
+        <td title="${esc(groups)}">${esc(groups) || '<span class="fb-none">No price group</span>'}</td>
+        <td class="cv-act"><button type="button" class="kebab fb-kebab${fbMenuFor === fb.id ? " active" : ""}" data-fid="${esc(fb.id)}" title="Actions"><i></i><i></i><i></i></button></td>
+      </tr>${colours}`;
+  }).join("");
+  const all = MATERIALS.length > 0 && MATERIALS.every(fb => fbPicked.has(fb.id));
+  return `<tr class="fv-row"><td colspan="11"><div class="cv-panel fv-panel fb-panel" data-fv="${i}">
+    <table class="cv-table fb-table">
+      <thead><tr>
+        <th class="fb-chk"><input type="checkbox" class="chk fb-cb fb-all" ${all ? "checked" : ""} aria-label="Select all fabrics"></th><th class="fb-exp"></th>
+        <th>Fabric Name</th><th>Price Group Name</th>
+        <th class="cv-act"><button type="button" class="cv-more fb-more" title="Fabric options" aria-haspopup="menu"><i></i><i></i><i></i></button></th></tr></thead>
+      <tbody>${rows || `<tr class="cv-empty"><td colspan="5">No fabrics yet. Click ⋯ to add a new or existing fabric.</td></tr>`}</tbody>
+    </table></div></td></tr>`;
+}
+
+// menus (fixed position, like the other ⋮ menus)
+const fbMenu = document.getElementById("fbMenu");
+const fbRowMenu = document.getElementById("fbRowMenu");
+let fbMenuFor = null; // fabric id whose ⋮ menu is open
+function placeMenu(menu, btn, alignRight) {
+  menu.hidden = false;
+  const r = btn.getBoundingClientRect();
+  if (alignRight) { menu.style.top = `${r.bottom + 6}px`; menu.style.left = `${Math.max(8, r.right - menu.offsetWidth)}px`; }
+  else { menu.style.top = `${r.top + r.height / 2 - menu.offsetHeight / 2}px`; menu.style.left = `${r.left - 18 - menu.offsetWidth}px`; }
+}
+function closeFbMenus() {
+  fbMenu.hidden = true;
+  if (fbMenuFor !== null) { fbMenuFor = null; fbRowMenu.hidden = true; render(); }
+}
+
+rowsEl.addEventListener("click", e => {
+  const panel = e.target.closest(".fb-panel");
+  if (!panel) return;
+  const x = e.target.closest(".fb-x");
+  if (x) { const id = x.dataset.fid; fbExpanded.has(id) ? fbExpanded.delete(id) : fbExpanded.add(id); render(); return; }
+  const more = e.target.closest(".fb-more");
+  if (more) {
+    e.stopPropagation();
+    if (!fbMenu.hidden) { fbMenu.hidden = true; return; }
+    fbMenu.querySelector('[data-fb="unlink"]').hidden = !fbPicked.size;
+    placeMenu(fbMenu, more, true);
+    return;
+  }
+  const k = e.target.closest(".fb-kebab");
+  if (k) {
+    e.stopPropagation();
+    const id = k.dataset.fid;
+    if (fbMenuFor === id) { closeFbMenus(); return; }
+    const r = k.getBoundingClientRect();
+    fbMenuFor = id;
+    render();
+    fbRowMenu.hidden = false;
+    fbRowMenu.style.top = `${r.top + r.height / 2 - fbRowMenu.offsetHeight / 2}px`;
+    fbRowMenu.style.left = `${r.left - 18 - fbRowMenu.offsetWidth}px`;
+  }
+});
+rowsEl.addEventListener("change", e => {
+  if (!e.target.classList.contains("fb-cb")) return;
+  if (e.target.classList.contains("fb-all")) MATERIALS.forEach(fb => (e.target.checked ? fbPicked.add(fb.id) : fbPicked.delete(fb.id)));
+  else e.target.checked ? fbPicked.add(e.target.value) : fbPicked.delete(e.target.value);
+  render();
+});
+document.addEventListener("click", e => {
+  if (!fbMenu.hidden && !fbMenu.contains(e.target)) fbMenu.hidden = true;
+  if (fbMenuFor !== null && !fbRowMenu.contains(e.target) && !e.target.closest(".fb-kebab")) closeFbMenus();
+});
+document.querySelector(".grid").addEventListener("scroll", closeFbMenus);
+
+function unlinkFabrics(ids) {
+  const names = MATERIALS.filter(fb => ids.includes(fb.id)).map(fb => fb.name);
+  if (!names.length || !confirm(`Unlink ${names.length === 1 ? `"${names[0]}"` : `${names.length} fabrics`} from ${PRODUCT_NAME}?`)) return;
+  for (let k = MATERIALS.length - 1; k >= 0; k--) if (ids.includes(MATERIALS[k].id)) { fbPicked.delete(MATERIALS[k].id); fbExpanded.delete(MATERIALS[k].id); MATERIALS.splice(k, 1); }
+  render();
+  showToast({ type: "success", title: "Success", message: `${names.length} fabric${names.length === 1 ? "" : "s"} unlinked`, duration: 4000 });
+}
+
+fbMenu.addEventListener("click", e => {
+  const a = e.target.closest("[data-fb]");
+  if (!a) return;
+  fbMenu.hidden = true;
+  if (a.dataset.fb === "new") openFbNew();
+  else if (a.dataset.fb === "existing") openFbLink();
+  else if (a.dataset.fb === "unlink") unlinkFabrics([...fbPicked]);
+  else showToast({ type: "success", title: "Info", message: "Create Recipe isn't available in this prototype yet", duration: 4000 });
+});
+fbRowMenu.addEventListener("click", e => {
+  const a = e.target.closest("[data-fbrow]");
+  if (!a || fbMenuFor === null) return;
+  const id = fbMenuFor;
+  closeFbMenus();
+  if (a.dataset.fbrow === "groups") openFbGroups(id);
+  else unlinkFabrics([id]);
+});
+
+// price group tick list (all price groups of the product, with their supplier)
+function groupChecks(el, chosen, supplier) {
+  const groups = Object.values(CATEGORY_VALUES).flat();
+  const names = [...new Set(groups.map(g => g.name))];
+  const sup = n => [...new Set(groups.filter(g => g.name === n).map(g => g.supplier))].join(", ");
+  const list = supplier ? names.filter(n => groups.some(g => g.name === n && g.supplier === supplier)).concat(chosen.filter(n => !names.includes(n) || !groups.some(g => g.name === n && g.supplier === supplier))) : names;
+  el.innerHTML = list.length
+    ? [...new Set(list)].map(n => `<label class="fb-pg"><input type="checkbox" class="chk" value="${esc(n)}" ${chosen.includes(n) ? "checked" : ""}><span>${esc(n)}</span><small>${esc(sup(n))}</small></label>`).join("")
+    : `<span class="fb-none">${supplier ? `No price groups for ${esc(supplier)} yet` : "No price groups yet"} — add them in Styles → Types.</span>`;
+}
+const tickedIn = el => [...el.querySelectorAll("input:checked")].map(x => x.value);
+
+// ---- Edit Price Groups (one fabric) ----
+let fbGroupsFor = null;
+function openFbGroups(id) {
+  const fb = MATERIALS.find(x => x.id === id);
+  if (!fb) return;
+  fbGroupsFor = id;
+  document.getElementById("fbPgFor").textContent = fb.name;
+  groupChecks(document.getElementById("fbPgList"), fabricGroups(fb), "");
+  document.getElementById("fbPgModal").hidden = false;
+}
+document.getElementById("fbPgForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const fb = MATERIALS.find(x => x.id === fbGroupsFor);
+  fb.priceGroups = tickedIn(document.getElementById("fbPgList"));
+  fb.colours.forEach(c => { c.priceGroups = []; }); // the fabric's price groups now apply to all its colours
+  document.getElementById("fbPgModal").hidden = true;
+  render();
+  showToast({ type: "success", title: "Success", message: `Price groups updated for ${fb.name}`, duration: 3000 });
+});
+document.querySelectorAll("[data-fbpg-close]").forEach(b => b.addEventListener("click", () => { document.getElementById("fbPgModal").hidden = true; }));
+
+// ---- Add New Fabric ----
+const fbNewSupplier = document.getElementById("fbNewSupplier");
+SUPPLIERS.forEach(n => fbNewSupplier.add(new Option(n, n)));
+function openFbNew() {
+  document.getElementById("fbNewForm").reset();
+  ["fbNewName", "fbNewSupplier"].forEach(id => document.getElementById(id).classList.remove("invalid"));
+  groupChecks(document.getElementById("fbNewGroups"), [], "");
+  document.getElementById("fbNewModal").hidden = false;
+  document.getElementById("fbNewName").focus();
+}
+fbNewSupplier.addEventListener("change", () => {
+  fbNewSupplier.classList.remove("invalid");
+  groupChecks(document.getElementById("fbNewGroups"), tickedIn(document.getElementById("fbNewGroups")), fbNewSupplier.value);
+});
+document.getElementById("fbNewName").addEventListener("input", e => e.target.classList.remove("invalid"));
+document.getElementById("fbNewForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const name = document.getElementById("fbNewName").value.trim();
+  const code = document.getElementById("fbNewCode").value.trim();
+  const supplier = fbNewSupplier.value;
+  document.getElementById("fbNewName").classList.toggle("invalid", !name);
+  fbNewSupplier.classList.toggle("invalid", !supplier);
+  if (!name || !supplier) { showToast({ title: "Error", message: `Please fill in: ${[!name && "Fabric Name", !supplier && "Supplier"].filter(Boolean).join(", ")}`, duration: 5000 }); return; }
+  const key = `${name}|${code}|${supplier}`.toLowerCase();
+  if (MATERIALS.some(fb => `${fb.name}|${fb.code}|${fb.supplier}`.toLowerCase() === key)) { showToast({ title: "Error", message: "Duplicate entry for Fabric Name" }); return; }
+  MATERIALS.unshift({ id: fbUid("m"), name, code, description: "", supplier, partNo: "", priceGroups: tickedIn(document.getElementById("fbNewGroups")), colours: [] });
+  document.getElementById("fbNewModal").hidden = true;
+  render();
+  showToast({ type: "success", title: "Success", message: `${name} added. Add its colours on Materials → Fabrics.`, duration: 4000 });
+});
+document.querySelectorAll("[data-fbnew-close]").forEach(b => b.addEventListener("click", () => { document.getElementById("fbNewModal").hidden = true; }));
+
+// ---- Use Existing Fabric (Link Existing Fabric) ----
+const FBL_COLS = [
+  { key: "name", label: "Fabric Name" }, { key: "code", label: "Fabric Code" }, { key: "supplier", label: "Fabric Supplier" },
+  { key: "groups", label: "Price Group Name" }, { key: "products", label: "Linked Products" }
+];
+const fblQ = FBL_COLS.map(() => "");
+const fblPicked = new Set();
+let fblPool = [];
+document.getElementById("fbLinkFilter").innerHTML = `<th class="l-chk"></th>` + FBL_COLS.map((c, k) =>
+  `<th><div class="cv-search"><button type="button" class="cv-sbtn" data-col="${k}" title="Search ${c.label}">${searchSvg}</button><input class="cv-sinput" data-col="${k}" placeholder="Search" autocomplete="off"></div></th>`).join("");
+function openFbLink() {
+  const mine = new Set(MATERIALS.map(fb => `${fb.name}|${fb.code}|${fb.supplier}`.toLowerCase()));
+  fblPool = ProductStore.allMaterials()
+    .filter(({ fabric }) => !mine.has(`${fabric.name}|${fabric.code}|${fabric.supplier}`.toLowerCase()))
+    .map(({ fabric, products }) => ({ key: `${fabric.name}|${fabric.code}|${fabric.supplier}`.toLowerCase(), fabric,
+      name: fabric.name, code: fabric.code || "", supplier: fabric.supplier, groups: fabricGroups(fabric).join(", "),
+      products: products.filter(p => p.toLowerCase() !== PRODUCT_NAME.toLowerCase()).join(", ") || "Sample library" }));
+  fblPicked.clear();
+  fblQ.fill("");
+  document.querySelectorAll("#fbLinkFilter .cv-search").forEach(b => { b.classList.remove("open"); b.querySelector("input").value = ""; });
+  renderFbLink();
+  document.getElementById("fbLinkModal").hidden = false;
+}
+const fblShown = () => fblPool.filter(r => FBL_COLS.every((c, k) => !fblQ[k] || String(r[c.key]).toLowerCase().includes(fblQ[k].trim().toLowerCase())));
+function renderFbLink() {
+  const rows = fblShown();
+  document.getElementById("fbLinkRows").innerHTML = rows.length
+    ? rows.map(r => `<tr class="${fblPicked.has(r.key) ? "picked" : ""}" data-key="${esc(r.key)}"><td class="l-chk"><input type="checkbox" class="chk" value="${esc(r.key)}" ${fblPicked.has(r.key) ? "checked" : ""} aria-label="Select ${esc(r.name)}"></td>${FBL_COLS.map(c => `<td title="${esc(r[c.key])}">${esc(r[c.key])}</td>`).join("")}</tr>`).join("")
+    : `<tr class="l-empty"><td colspan="${FBL_COLS.length + 1}">${fblPool.length ? "No fabrics match your search" : "All existing fabrics are already linked to this product"}</td></tr>`;
+  const all = document.getElementById("fbLinkAll");
+  all.checked = rows.length > 0 && rows.every(r => fblPicked.has(r.key));
+  all.indeterminate = !all.checked && rows.some(r => fblPicked.has(r.key));
+  document.getElementById("fbLinkTotal").textContent = `Total Record: ${rows.length}${fblPicked.size ? ` · ${fblPicked.size} selected` : ""}`;
+}
+document.getElementById("fbLinkRows").addEventListener("change", e => { if (!e.target.classList.contains("chk")) return; e.target.checked ? fblPicked.add(e.target.value) : fblPicked.delete(e.target.value); renderFbLink(); });
+document.getElementById("fbLinkRows").addEventListener("click", e => {
+  const tr = e.target.closest("tr[data-key]");
+  if (!tr || e.target.closest("input")) return;
+  const box = tr.querySelector(".chk"); box.checked = !box.checked; box.dispatchEvent(new Event("change", { bubbles: true }));
+});
+document.getElementById("fbLinkAll").addEventListener("change", e => { fblShown().forEach(r => (e.target.checked ? fblPicked.add(r.key) : fblPicked.delete(r.key))); renderFbLink(); });
+document.getElementById("fbLinkFilter").addEventListener("click", e => {
+  const b = e.target.closest(".cv-sbtn");
+  if (!b) return;
+  const box = b.parentElement;
+  if (box.classList.toggle("open")) box.querySelector("input").focus();
+  else { fblQ[+b.dataset.col] = ""; box.querySelector("input").value = ""; renderFbLink(); }
+});
+document.getElementById("fbLinkFilter").addEventListener("input", e => { fblQ[+e.target.dataset.col] = e.target.value; renderFbLink(); });
+document.getElementById("fbLinkSave").addEventListener("click", () => {
+  if (!fblPicked.size) { showToast({ title: "Error", message: "Select at least one fabric to link" }); return; }
+  const rows = fblPool.filter(r => fblPicked.has(r.key));
+  rows.forEach(r => {
+    const copy = JSON.parse(JSON.stringify(r.fabric));
+    copy.id = fbUid("m");
+    copy.colours.forEach(c => { c.id = fbUid("c"); });
+    MATERIALS.unshift(copy);
+  });
+  document.getElementById("fbLinkModal").hidden = true;
+  render();
+  showToast({ type: "success", title: "Success", message: `${rows.length} fabric${rows.length === 1 ? "" : "s"} linked`, duration: 4000 });
+});
+document.getElementById("fbLinkAddNew").addEventListener("click", () => { document.getElementById("fbLinkModal").hidden = true; openFbNew(); });
+document.querySelector("[data-fblink-close]").addEventListener("click", () => { document.getElementById("fbLinkModal").hidden = true; });
+
+// Esc closes these popups / menus first
+window.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  const open = ["fbPgModal", "fbNewModal", "fbLinkModal"].find(id => !document.getElementById(id).hidden);
+  if (open) { e.stopImmediatePropagation(); document.getElementById(open).hidden = true; return; }
+  if (!fbMenu.hidden || fbMenuFor !== null) { e.stopImmediatePropagation(); fbMenu.hidden = true; closeFbMenus(); }
+}, true);
 
 render();

@@ -14,9 +14,47 @@ if (params.has("category")) {
   if (![...categorySelect.options].some(o => o.value === cat)) categorySelect.add(new Option(cat, cat));
   categorySelect.value = cat;
 }
-crumbProduct.textContent = nameInput.value || "Product";
-document.title = `${crumbProduct.textContent} - General Info`;
-nameInput.addEventListener("input", () => { crumbProduct.textContent = nameInput.value || "Product"; });
+// ---------- New product ("+ Product" in the top bar) ----------
+const isNew = params.has("new");
+const costSelect = document.getElementById("costFrom");
+const sellingSelect = document.getElementById("sellingFrom");
+const groupSelect = document.getElementById("productGroup");
+const PRODUCT_GROUPS = ["Ungroup products", "Rollers", "Soft Furnishing", "Outdoor Products", "Verts", "Venetian", "Shutters", "DMI"];
+const REQUIRED = [nameInput, codeInput, categorySelect, costSelect, sellingSelect];
+
+if (isNew) {
+  document.title = "Product - General Info";
+  crumbProduct.textContent = "Product";
+  document.querySelector(".crumb .current").hidden = true;
+  nameInput.value = "";
+  nameInput.placeholder = "Please Enter Your Product Name";
+  codeInput.value = "";
+  codeInput.placeholder = "Please Enter Your Product Code";
+  [categorySelect, costSelect, sellingSelect].forEach(sel => {
+    sel.insertBefore(new Option("Select", ""), sel.firstChild);
+    sel.value = "";
+  });
+  // a new product: Category and both "Comes From" boxes are normal, editable selects
+  [categorySelect, costSelect, sellingSelect].forEach(sel => sel.parentElement.classList.remove("grey"));
+  costSelect.add(new Option("Price Table", "Price Table"));
+  costSelect.add(new Option("Cost Price", "Cost Price"));
+  sellingSelect.add(new Option("Cost + Markup", "Cost + Markup"));
+  sellingSelect.add(new Option("Price Table", "Price Table"));
+  groupSelect.innerHTML = PRODUCT_GROUPS.map(g => `<option>${g}</option>`).join("");
+  groupSelect.value = "Ungroup products";
+  document.getElementById("discountPriceTables").remove();
+  const prod = document.getElementById("modProduction");
+  prod.classList.add("off");
+  prod.firstChild.textContent = "OFF";
+  // no pictures yet: every image box shows the upload area
+  document.querySelectorAll(".img-box .thumb").forEach(t => t.remove());
+} else {
+  // a saved product: Cost / Selling Price Comes From can no longer be changed
+  [costSelect, sellingSelect].forEach(sel => { sel.disabled = true; sel.title = "Set when the product was created"; });
+  crumbProduct.textContent = nameInput.value || "Product";
+  document.title = `${crumbProduct.textContent} - General Info`;
+  nameInput.addEventListener("input", () => { crumbProduct.textContent = nameInput.value || "Product"; });
+}
 
 // Focus the product name like the screenshot
 nameInput.focus();
@@ -137,15 +175,48 @@ document.querySelectorAll(".drop").forEach(drop => {
 });
 
 // ---------- Save & Next: check required fields ----------
+// New product: saved, then Fields and Values opens for it (it starts with Unit Type, Quantity, Supplier).
+const sameName = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
+
 document.getElementById("productForm").addEventListener("submit", e => {
   e.preventDefault();
-  let ok = true;
-  [nameInput, codeInput].forEach(input => {
-    const empty = !input.value.trim();
-    input.classList.toggle("invalid", empty);
-    if (empty && ok) { input.focus(); ok = false; }
-  });
+  const required = isNew ? REQUIRED : [nameInput, codeInput];
+  const missing = required.filter(el => !el.value.trim());
+  required.forEach(el => el.classList.toggle("invalid", missing.includes(el)));
+  if (missing.length) {
+    missing[0].focus();
+    if (isNew) {
+      const labels = missing.map(el => document.querySelector(`label[for="${el.id}"]`).childNodes[0].textContent.trim());
+      showToast({ title: "Error", message: `Please fill in: ${labels.join(", ")}`, duration: 5000 });
+    }
+    return;
+  }
+  if (!isNew) return;
+
+  const name = nameInput.value.trim();
+  const code = codeInput.value.trim();
+  const all = [...ProductStore.customProducts().map(p => [p.name, p.code]), ...PRODUCTS.map(p => [p[0], p[1]])];
+  if (all.some(([n]) => sameName(n, name))) {
+    nameInput.classList.add("invalid"); nameInput.focus();
+    showToast({ title: "Error", message: "Duplicate entry for Product Name" });
+    return;
+  }
+  if (all.some(([, c]) => sameName(c, code))) {
+    codeInput.classList.add("invalid"); codeInput.focus();
+    showToast({ title: "Error", message: "Duplicate entry for Product code" });
+    return;
+  }
+
+  const product = {
+    name, code, report: reportInput.value.trim(), category: categorySelect.value,
+    group: groupSelect.value, description: document.getElementById("productDesc").value.trim(),
+    costFrom: costSelect.value, sellingFrom: sellingSelect.value
+  };
+  ProductStore.createProduct(product);
+  location.href = `product-fields.html?${new URLSearchParams({ name, code, report: product.report, category: product.category })}`;
 });
 
-[nameInput, codeInput].forEach(input =>
-  input.addEventListener("input", () => input.classList.remove("invalid")));
+REQUIRED.forEach(el => {
+  el.addEventListener("input", () => el.classList.remove("invalid"));
+  el.addEventListener("change", () => el.classList.remove("invalid"));
+});
