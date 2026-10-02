@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Quotes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/common.css">
+<link rel="stylesheet" href="css/create-job.css">
+<link rel="stylesheet" href="css/job-quotes.css">
+<link rel="stylesheet" href="css/interactive-quotes.css">
+</head>
+<body>
+<!-- Interactive Quotes demo: the Select Report → Quotation flow on job ON5507 (Markilux sample).
+     Page: js/interactive-quotes.js · Flow: js/job-quotes.js · Data: js/job-store.js -->
+
+<!-- Top navigation -->
+<header class="topnav">
+  <div class="brand">
+    <div class="logo"><span>Blindmatrix</span></div>
+    <b>REQ</b>
+  </div>
+  <nav class="menu">
+    <a href="#">Dashboard</a>
+    <a href="all-job.html" class="active">All Job</a>
+    <a href="#">Tasks</a>
+    <a href="#">Calendar</a>
+    <a href="#">Production management</a>
+    <a href="#">Purchase orders</a>
+    <a href="#">More <svg width="11" height="7" viewBox="0 0 11 7"><path d="M0 0h11L5.5 7z" fill="#fff"/></svg></a>
+  </nav>
+  <div class="nav-right">
+    <div class="copilot">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c7cdf5" stroke-width="1.6" stroke-linejoin="round"><path d="M10 3l1.8 5.2L17 10l-5.2 1.8L10 17l-1.8-5.2L3 10l5.2-1.8z"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z"/></svg>
+      Ask BM Copilot <span class="beta">Beta</span>
+    </div>
+    <div class="ic ic-add" id="addBtn" title="Add">
+      <svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 1v14M1 8h14" stroke="#fff" stroke-width="2.6"/></svg>
+      <ul class="add-menu" id="addMenu">
+        <li><a href="create-job.html">+ Job</a></li>
+        <li><a href="#">+ Appointment</a></li>
+        <li><a href="#">+ Account</a></li>
+        <li><a href="#">+ Contact</a></li>
+        <li><a href="#">+ Task</a></li>
+        <li><a href="product-general.html?new=1">+ Product</a></li>
+      </ul>
+    </div>
+    <div class="ic ic-bell"><svg width="18" height="19" viewBox="0 0 24 24" fill="#fff"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 0 0-5.5-6.84V3a1.5 1.5 0 0 0-3 0v1.16A7 7 0 0 0 5 11v5l-2 2v1h18v-1z"/></svg><span class="badge">35</span></div>
+    <a class="ic ic-settings" href="settings.html" title="Settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.6 7.6 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg></a>
+    <div class="help"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".6" fill="#fff"/></svg>Help &amp; Support</div>
+    <div class="user"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3.2"/><path d="M5.5 19c1.5-2.6 3.8-3.8 6.5-3.8s5 1.2 6.5 3.8"/></svg>Srinath <svg width="12" height="8" viewBox="0 0 12 8" fill="none" stroke="#fff" stroke-width="2"><path d="M1 1.5l5 5 5-5"/></svg></div>
+  </div>
+</header>
+
+<!-- Sub header -->
+<div class="subhead iqd-subhead">
+  <div class="crumb">
+    <a href="all-job.html">All Job</a><span class="sep"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#111" stroke-width="1.4"><path d="M1 1l3 3.5L1 8M5 1l3 3.5L5 8"/></svg></span>
+    <a href="create-job.html?ref=ON5507" id="iqdJobLink">ON5507</a><span class="sep"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="#111" stroke-width="1.4"><path d="M1 1l3 3.5L1 8M5 1l3 3.5L5 8"/></svg></span>
+    <span class="current">Interactive Quotes</span>
+  </div>
+  <div class="sub-actions">
+    <a class="m-btn m-cancel iqd-link" href="create-job.html?ref=ON5507">Open in Edit Job</a>
+    <button type="button" class="btn-pink iqd-reset" id="iqdReset">Reset demo data</button>
+  </div>
+</div>
+
+<div class="iqd-page">
+
+  <!-- ================= Left: job + current quote version ================= -->
+  <section class="iqd-left">
+    <div class="iqd-head">
+      <label class="jh-lbl" for="jobRef">Job Ref No</label>
+      <div class="jh-ref">
+        <input class="jh-input" id="jobRef" value="ON5507" readonly>
+        <button type="button" class="jh-quote" id="quoteVerBtn" aria-haspopup="menu" aria-expanded="false" title="Quote version"><span id="quoteVerLabel">Q1</span> <svg width="9" height="6" viewBox="0 0 9 6"><path d="M0 0h9L4.5 6z" fill="#fff"/></svg></button>
+        <div class="pg-menu qv-menu" id="quoteVerMenu" role="menu" hidden></div>
+      </div>
+      <label class="jh-lbl" for="jobStatus">Job Status</label>
+      <div class="jh-select">
+        <select id="jobStatus">
+          <option>Agent Quote</option><option>Lead</option><option>Order</option><option>Invoiced</option>
+          <option>Quote Rejected</option><option>Partially paid</option><option>Backorder</option>
+        </select>
+        <svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0h10L5 6z" fill="#fff"/></svg>
+      </div>
+      <label class="jh-lbl" for="accountRef">Account Ref</label>
+      <input class="jh-input white" id="accountRef" readonly>
+    </div>
+
+    <div class="job-bar iqd-bar">
+      <div class="rep-wrap">
+        <button type="button" class="jb-btn" id="selectReportBtn" title="Select report" aria-haspopup="menu" aria-expanded="false">Select Report <svg width="9" height="6" viewBox="0 0 9 6"><path d="M0 0h9L4.5 6z" fill="#fff"/></svg></button>
+        <div class="pg-menu rep-menu" id="reportMenu" role="menu" hidden>
+          <button type="button" role="menuitem" data-report="Quotation">Quotation</button>
+          <button type="button" role="menuitem" data-report="Invoice">Invoice</button>
+          <button type="button" role="menuitem" data-report="Order Confirmation">Order Confirmation</button>
+          <button type="button" role="menuitem" data-report="Delivery Note">Delivery Note</button>
+        </div>
+      </div>
+      <span class="iqd-hint">Select Report → Quotation → <b>Interactive quotation</b></span>
+      <div class="jb-icons">
+        <div class="more-wrap">
+          <button type="button" class="jb-ic" id="jobMoreBtn" title="More" aria-haspopup="menu" aria-expanded="false"><svg width="14" height="4" viewBox="0 0 14 4" fill="#e5197d"><circle cx="2" cy="2" r="1.6"/><circle cx="7" cy="2" r="1.6"/><circle cx="12" cy="2" r="1.6"/></svg></button>
+          <div class="pg-menu job-more-menu" id="jobMoreMenu" role="menu" hidden>
+            <div class="jm-sub-wrap">
+              <button type="button" role="menuitem" class="jm-has-sub" data-more="create" aria-haspopup="menu" aria-expanded="false">Create <span class="jm-arrow">&gt;</span></button>
+              <div class="pg-menu jm-sub" id="jobCreateSub" role="menu" hidden>
+                <button type="button" role="menuitem" data-more="new">New quote version</button>
+              </div>
+            </div>
+            <button type="button" role="menuitem" data-more="new">New quote version</button>
+            <button type="button" role="menuitem" data-more="compare">Compare quote version</button>
+            <button type="button" role="menuitem" data-more="interactive">Interactive Quotes</button>
+            <button type="button" role="menuitem" data-more="back">Back to All Job</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="iqd-grid">
+      <table class="qg iqd-table" aria-label="Products in the current quote version">
+        <colgroup><col style="width:40px"><col style="width:190px"><col><col style="width:60px"><col style="width:120px"><col style="width:110px"><col style="width:130px"></colgroup>
+        <thead><tr><th>#</th><th>Product</th><th>Description</th><th>Qty</th><th class="right">Net</th><th class="right">VAT</th><th class="right">Total</th></tr></thead>
+        <tbody id="iqdRows"></tbody>
+        <tfoot><tr><td colspan="4">Total <span id="iqdVer"></span></td><td class="right" id="iqdNet"></td><td class="right" id="iqdVat"></td><td class="right" id="iqdTotal"></td></tr></tfoot>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= Right: customer, quote versions, activities ================= -->
+  <aside class="iqd-right">
+    <section class="rcard">
+      <div class="rtabs"><span class="rtab active">Customer</span></div>
+      <div class="iqd-cust">
+        <input type="hidden" id="cTitle"><input type="hidden" id="cAddress2">
+        <label for="cFirst">First name</label><input class="cf-in" id="cFirst" readonly>
+        <label for="cLast">Last name</label><input class="cf-in" id="cLast" readonly>
+        <label for="cEmail">Email</label><input class="cf-in" id="cEmail" readonly>
+        <label for="cPhone">Phone</label><input class="cf-in" id="cPhone" readonly>
+        <label for="cAddress1">Address</label><input class="cf-in" id="cAddress1" readonly>
+        <label for="cTown">Town / City</label><input class="cf-in" id="cTown" readonly>
+        <label for="cState">County</label><input class="cf-in" id="cState" readonly>
+        <label for="cZip">Postcode</label><input class="cf-in" id="cZip" readonly>
+      </div>
+    </section>
+
+    <section class="rcard">
+      <div class="rtabs"><span class="rtab active">Quote versions</span></div>
+      <div class="iqd-versions" id="iqdVersions"></div>
+    </section>
+
+    <section class="rcard grow">
+      <div class="rtabs"><span class="rtab active">All Activities</span></div>
+      <div class="rpane act-pane">
+        <div class="act-list" id="actList" hidden></div>
+        <div class="act-empty" id="actEmpty">No Rows To Show</div>
+      </div>
+    </section>
+  </aside>
+</div>
+
+<div class="page-foot">
+  <span class="job-msg" id="jobMsg" role="status"></span>
+  <span class="iqd-foot-note">Demo page – changes are saved to job ON5507 in this browser.</span>
+</div>
+
+<!-- ================= Select Report → Quotation flow — js/job-quotes.js ================= -->
+
+<!-- 1. Quotation type -->
+<div class="modal-overlay qt-overlay" id="qtTypeModal" hidden>
+  <div class="qm qm-type" role="dialog" aria-modal="true" aria-labelledby="qtTypeTitle">
+    <div class="qm-head"><h3 id="qtTypeTitle">Select quotation type</h3></div>
+    <button type="button" class="modal-close" data-qm-close title="Close"><svg width="12" height="12" viewBox="0 0 12 12" stroke="#e5197d" stroke-width="2.6" stroke-linecap="round"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
+    <div class="qm-body">
+      <p class="qm-intro">Choose how this quotation is produced for the customer.</p>
+      <div class="qt-list" role="radiogroup" aria-label="Quotation type">
+        <label class="qt-card"><input type="radio" name="qtType" value="standard" checked>
+          <span class="qt-radio"></span>
+          <span class="qt-text"><b>Standard quotation</b><span>Choose the quote versions to include, then preview the quotation report.</span><small id="qtStandardMeta"></small></span>
+        </label>
+        <label class="qt-card"><input type="radio" name="qtType" value="interactive">
+          <span class="qt-radio"></span>
+          <span class="qt-text"><b>Interactive quotation <em class="qt-tag">Multiple options</em></b><span>Pick products and optional extras across quote versions. The customer chooses and accepts online.</span><small id="qtInteractiveMeta"></small></span>
+        </label>
+      </div>
+    </div>
+    <div class="qm-foot">
+      <button type="button" class="m-btn m-save" id="qtTypeContinue">Continue</button>
+      <button type="button" class="m-btn m-cancel" data-qm-close>Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Standard: choose quote versions -->
+<div class="modal-overlay qt-overlay" id="qtVersionsModal" hidden>
+  <div class="qm qm-versions" role="dialog" aria-modal="true" aria-labelledby="qtVersionsTitle">
+    <div class="qm-head"><h3 id="qtVersionsTitle">Select quote versions</h3></div>
+    <button type="button" class="modal-close" data-qm-close title="Close"><svg width="12" height="12" viewBox="0 0 12 12" stroke="#e5197d" stroke-width="2.6" stroke-linecap="round"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
+    <div class="qm-body">
+      <p class="qm-note">Only the selected quote versions are included in the report and shared with the customer.</p>
+      <div class="qg-wrap">
+        <table class="qg">
+          <colgroup><col style="width:44px"><col style="width:90px"><col><col style="width:90px"><col style="width:130px"></colgroup>
+          <thead><tr><th><input type="checkbox" class="jt-chk" id="qvAll" aria-label="Select all quote versions"></th><th>Quote</th><th>Status</th><th>Products</th><th class="right">Total</th></tr></thead>
+          <tbody id="qvRows"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="qm-foot">
+      <span class="qm-error" id="qvError" role="alert"></span>
+      <button type="button" class="m-btn m-save" id="qvContinue">Continue</button>
+      <button type="button" class="m-btn m-cancel" data-qm-close>Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Interactive Quotes (sales rep) / View Quotation (customer) -->
+<div class="modal-overlay qt-overlay iq-overlay" id="iqModal" hidden>
+  <div class="qm iq" role="dialog" aria-modal="true" aria-labelledby="iqTitle">
+    <div class="iq-cust-bar">
+      <div class="brand"><div class="logo"><span>Blindmatrix</span></div><b>REQ</b></div>
+    </div>
+    <div class="qm-head"><h3 id="iqTitle">Interactive Quotes</h3><span class="iq-sub" id="iqSub">Select products and optional extras from one or more quote versions</span></div>
+    <button type="button" class="modal-close" id="iqClose" title="Close"><svg width="12" height="12" viewBox="0 0 12 12" stroke="#e5197d" stroke-width="2.6" stroke-linecap="round"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
+    <div class="iq-body">
+      <aside class="iq-side">
+        <div class="iq-side-title">Quote versions</div>
+        <div class="iq-nav" id="iqNav"></div>
+      </aside>
+      <main class="iq-main" id="iqMain"></main>
+    </div>
+    <div class="qm-foot" id="iqFoot"></div>
+  </div>
+</div>
+
+<!-- 4. Report preview -->
+<section class="rp-view" id="rpView" hidden aria-label="Report preview">
+  <div class="rp-bar">
+    <b class="rp-title" id="rpTitle">Quotation</b>
+    <button type="button" class="rp-btn" id="rpPrint"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print</button>
+    <button type="button" class="rp-btn" id="rpPdf"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Save PDF</button>
+    <div class="rp-send-wrap">
+      <button type="button" class="jb-btn" id="rpSend" aria-haspopup="menu" aria-expanded="false">Send <svg width="9" height="6" viewBox="0 0 9 6"><path d="M0 0h9L4.5 6z" fill="#fff"/></svg></button>
+      <div class="pg-menu rp-formats" id="rpFormats" role="menu" hidden>
+        <button type="button" role="menuitem" data-format="Adobe PDF">Adobe PDF</button>
+        <button type="button" role="menuitem" data-format="HTML">HTML</button>
+        <button type="button" role="menuitem" data-format="Text">Text</button>
+        <button type="button" role="menuitem" data-format="Microsoft Word">Microsoft Word</button>
+        <button type="button" role="menuitem" data-format="Microsoft Excel">Microsoft Excel</button>
+      </div>
+    </div>
+    <span class="rp-count" id="rpCount"></span>
+    <button type="button" class="m-btn m-cancel rp-close" id="rpClose">Close</button>
+  </div>
+  <div class="rp-select" id="rpSelect"></div>
+  <div class="rp-pages" id="rpPages"></div>
+</section>
+
+<!-- 5. Email options -->
+<div class="modal-overlay qt-overlay" id="emModal" hidden>
+  <form class="qm qm-email" id="emForm" novalidate role="dialog" aria-modal="true" aria-labelledby="emTitle">
+    <div class="qm-head"><h3 id="emTitle">Email Options</h3><span class="iq-sub" id="emFormat"></span></div>
+    <button type="button" class="modal-close" data-qm-close title="Close"><svg width="12" height="12" viewBox="0 0 12 12" stroke="#e5197d" stroke-width="2.6" stroke-linecap="round"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
+    <div class="qm-body em-grid">
+      <label class="cf-lbl" for="emFrom">From</label><input class="cf-in" id="emFrom" type="email" value="sales@blindmatrix.com" readonly>
+      <label class="cf-lbl" for="emTo">To <sup>*</sup></label><input class="cf-in" id="emTo" type="email" placeholder="Customer email" autocomplete="off">
+      <label class="cf-lbl" for="emCc">Cc</label><input class="cf-in" id="emCc" placeholder="Separate addresses with commas" autocomplete="off">
+      <label class="cf-lbl" for="emSubject">Subject <sup>*</sup></label><input class="cf-in" id="emSubject" autocomplete="off">
+      <label class="cf-lbl" for="emTemplate">Template <sup>*</sup></label>
+      <div class="cf-select"><select id="emTemplate"><option value="">Select</option><option value="standard">Quotation - Standard</option><option value="multiple">Quotation - Multiple Options</option></select><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0h10L5 6z" fill="#b5b9bd"/></svg></div>
+      <span class="cf-lbl">Quote versions</span><div class="em-chips" id="emChips"></div>
+      <label class="cf-lbl top" for="emMessage">Message <sup>*</sup></label><div class="cf-in em-msg" id="emMessage" contenteditable="true" role="textbox" aria-multiline="true"></div>
+      <span class="cf-lbl top">Attachments</span>
+      <div><label class="em-check"><input type="checkbox" class="jt-chk" id="emAttach"> Attach the quotation PDFs</label><div class="em-files" id="emFiles"></div></div>
+    </div>
+    <div class="qm-foot">
+      <span class="qm-error" id="emError" role="alert"></span>
+      <span class="qm-proto">Prototype – no email is sent.</span>
+      <button type="submit" class="m-btn m-save">Send</button>
+      <button type="button" class="m-btn m-cancel" data-qm-close>Back</button>
+    </div>
+  </form>
+</div>
+
+<!-- 6. Email sent -->
+<div class="modal-overlay qt-overlay" id="emSentModal" hidden>
+  <div class="qm qm-sent" role="dialog" aria-modal="true" aria-labelledby="emSentTitle">
+    <button type="button" class="modal-close" data-qm-close title="Close"><svg width="12" height="12" viewBox="0 0 12 12" stroke="#e5197d" stroke-width="2.6" stroke-linecap="round"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
+    <div class="qm-done">
+      <span class="qm-done-ic"><svg width="30" height="30" viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="2"><path d="M5 10.5l3.2 3.2L15 7"/></svg></span>
+      <h3 id="emSentTitle">Email sent</h3>
+      <p id="emSentText"></p>
+      <p class="qm-note left">The customer receives one email with a <b>View quotation</b> link and can choose products and extras online.</p>
+      <div class="qm-done-actions">
+        <button type="button" class="jb-btn" id="emOpenCustomer">Open customer view</button>
+        <button type="button" class="m-btn m-cancel" data-qm-close>Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 7. Terms and conditions (customer view) -->
+<div class="modal-overlay qt-overlay" id="termsModal" hidden>
+  <div class="qm qm-terms" role="dialog" aria-modal="true" aria-labelledby="termsTitle">
+    <div class="qm-head"><h3 id="termsTitle">Quotation terms and conditions</h3></div>
+    <button type="button" class="modal-close" data-qm-close title="Close"><svg width="12" height="12" viewBox="0 0 12 12" stroke="#e5197d" stroke-width="2.6" stroke-linecap="round"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
+    <div class="qm-body qm-text">
+      <p class="qm-note">Sample terms for this prototype. Replace them with your approved quotation terms.</p>
+      <p>Prices are valid for 30 days from the quotation date. A deposit is required before the order goes into production.</p>
+      <p>Please check the products, sizes, locations and optional extras before you accept. Accepting creates a new quote version; earlier versions stay unchanged.</p>
+    </div>
+    <div class="qm-foot"><button type="button" class="m-btn m-save" data-qm-close>Close</button></div>
+  </div>
+</div>
+<!-- 8. New quote version (⋯ → New quote version / Q1 ▾ → + New quote version) -->
+<div class="modal-overlay qt-overlay" id="newVerModal" hidden>
+  <div class="qm qm-newver" role="dialog" aria-modal="true" aria-labelledby="newVerTitle">
+    <div class="qm-head"><h3 id="newVerTitle">New quote version</h3></div>
+    <button type="button" class="modal-close" data-qm-close title="Close"><svg width="12" height="12" viewBox="0 0 12 12" stroke="#e5197d" stroke-width="2.6" stroke-linecap="round"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
+    <div class="qm-body">
+      <p class="qm-intro">Create <b id="newVerName">Q5</b> using the products from:</p>
+      <div class="nv-row">
+        <label class="cf-lbl" for="newVerFrom">Copy from</label>
+        <div class="cf-select"><select id="newVerFrom"></select><svg width="10" height="6" viewBox="0 0 10 6"><path d="M0 0h10L5 6z" fill="#b5b9bd"/></svg></div>
+      </div>
+      <p class="nv-summary" id="newVerSummary"></p>
+      <p class="qm-note">The existing quote version stays unchanged. The new version starts as Draft.</p>
+    </div>
+    <div class="qm-foot">
+      <button type="button" class="m-btn m-save" id="newVerCreate">Create quote</button>
+      <button type="button" class="m-btn m-cancel" data-qm-close>Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- 9. Compare quote version -->
+<div class="modal-overlay qt-overlay" id="compareModal" hidden>
+  <div class="qm qm-compare" role="dialog" aria-modal="true" aria-labelledby="compareTitle">
+    <div class="qm-head"><h3 id="compareTitle">Compare quote version</h3></div>
+    <button type="button" class="modal-close" data-qm-close title="Close"><svg width="12" height="12" viewBox="0 0 12 12" stroke="#e5197d" stroke-width="2.6" stroke-linecap="round"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
+    <div class="qm-body">
+      <div class="cp-bar">
+        <span class="rp-sel-lbl">Select versions:</span>
+        <div class="cp-vers" id="compareVers"></div>
+        <label class="rp-chip cp-diff"><input type="checkbox" class="jt-chk" id="compareDiff"> Differences only</label>
+      </div>
+      <div class="cp-scroll" id="compareTable"></div>
+    </div>
+    <div class="qm-foot">
+      <button type="button" class="m-btn m-cancel cp-left" id="compareIQ">Interactive Quotes</button>
+      <span class="qm-error" id="compareError" role="alert"></span>
+      <button type="button" class="m-btn m-save" id="compareExport">Export</button>
+      <button type="button" class="m-btn m-cancel" data-qm-close>Cancel</button>
+    </div>
+  </div>
+</div>
+
+
+<script src="js/common.js"></script>
+<script src="js/job-store.js"></script>
+<script src="js/interactive-quotes.js"></script>
+<script src="js/job-quotes.js"></script>
+</body>
+</html>

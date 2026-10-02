@@ -1,0 +1,51 @@
+/* Interactive Quotes demo page (interactive-quotes.html).
+   Shared parts come from css/create-job.css (buttons, menus, popups, cards) and css/job-quotes.css (the quotation flow). */
+
+.iqd-subhead .crumb .current{color:var(--pink)}
+.iqd-subhead .sub-actions{gap:8px}
+.iqd-link{height:30px;padding:0 14px}
+.iqd-reset{padding:0 16px}
+
+.iqd-page{flex:1;min-height:0;display:flex;gap:16px;padding:7px 14px 0 16px}
+.iqd-left{flex:1;min-width:0;display:flex;flex-direction:column;background:#fff;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.iqd-right{width:420px;flex-shrink:0;display:flex;flex-direction:column;gap:16px;min-height:0;overflow-y:auto}
+
+/* cyan job header */
+.iqd-head{height:60px;flex-shrink:0;background:var(--cyan);border-radius:3px 3px 0 0;display:grid;grid-template-columns:110px minmax(0,230px) 110px minmax(0,200px) 120px minmax(0,160px);align-items:center;padding-right:16px}
+.iqd-head .jh-lbl{padding-right:12px}
+
+.iqd-bar{padding:0 8px;gap:14px}
+.iqd-hint{font-size:12px;color:#777}
+.iqd-hint b{color:var(--pink);font-weight:600}
+
+/* products of the current version */
+.iqd-grid{flex:1;min-height:0;overflow:auto;padding:0 8px 8px}
+.iqd-grid::-webkit-scrollbar{width:6px;height:6px}
+.iqd-grid::-webkit-scrollbar-thumb{background:#1592d8;border-radius:4px}
+.iqd-table{min-width:760px;border:1px solid #d9dcdf}
+.iqd-table th{position:sticky;top:0;z-index:1}
+.iqd-table th:first-child,.iqd-table td:first-child{text-align:center;padding:0}
+.iqd-table td{height:auto;padding:9px 10px;vertical-align:top;line-height:1.45}
+.iqd-table td b{font-weight:600;color:#111}
+.iqd-desc span{display:block}
+.iqd-table tfoot td{height:30px;padding:0 10px;vertical-align:middle;background:#e5f4fb;border-top:1px solid #d6eef8;font-weight:600;color:#222}
+.iqd-table tfoot td:first-child{text-align:left;padding-left:10px}
+.iqd-table tfoot span{font-weight:400;color:#777}
+.iqd-empty{text-align:center !important;color:#777;padding:60px 0 !important}
+
+/* customer card */
+.iqd-cust{display:grid;grid-template-columns:96px minmax(0,1fr);row-gap:6px;align-items:center;padding:10px 14px 14px}
+.iqd-cust label{font-size:12.5px;color:#222}
+.iqd-cust .cf-in{height:28px;background:#f6f7f8}
+
+/* quote versions card */
+.iqd-versions{padding:8px 10px 10px;display:grid;gap:6px}
+.iqd-ver{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:7px 10px;border:1px solid #d9dcdf;border-radius:3px;background:#fff;font-family:inherit;font-size:12.5px;color:#222;cursor:pointer;text-align:left}
+.iqd-ver b{font-weight:600}
+.iqd-ver span{font-size:11.5px;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iqd-ver em{font-style:normal;font-weight:500}
+.iqd-ver:hover{border-color:var(--cyan)}
+.iqd-ver.current{border-color:var(--cyan-dark);background:#e5f4fb;box-shadow:inset 3px 0 0 var(--cyan-dark)}
+.iqd-ver.current b{color:var(--pink)}
+
+.iqd-foot-note{font-size:12px;color:#777}

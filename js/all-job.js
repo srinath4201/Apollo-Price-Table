@@ -5,6 +5,7 @@ const statusClass = {
 
 // [ref, deliveryRef, due, qty, notes, status, cost, lastName, gross, overdue]
 const data = [
+  ["ON5507","","30-09-2026","0/2","Markilux awnings","Lead","4007.25","Taylor","13332.00"],
   ["ON5506","","26-09-2026","0/1","","Agent Quote","0.00","","58.00"],
   ["ON5505","","26-09-2026","0/1","","Agent Quote","70.00","","324.24"],
   ["ON5504","","26-09-2026","0/1","","Lead","500.00","","1321.24"],
@@ -31,6 +32,17 @@ const data = [
   ["ON5483","","","0/1","","Agent Quote","0.00","","60.00"]
 ];
 
+// jobs saved from Create / Edit Job go to the top of the list
+const money = n => (Math.round((Number(n) || 0) * 100) / 100).toFixed(2);
+JobStore.list().reverse().forEach(j => {
+  const items = (j.quotes[j.current] || { items: [] }).items;
+  const sum = k => items.reduce((a, it) => a + (Number(it[k]) || 0), 0);
+  const row = [j.ref, "", j.due ? j.due.split("-").reverse().join("-") : "", `0/${items.length}`, (j.contact || {}).jStatusNotes || "", j.status, money(sum("cost")), (j.contact || {}).cLast || (j.contact || {}).last || "", money(sum("net") + sum("vat"))];
+  const at = data.findIndex(r => r[0] === j.ref);
+  if (at > -1) data.splice(at, 1);
+  data.unshift(row);
+});
+
 const searchIcon = '<span class="sicon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9aa6ad" stroke-width="2.4"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></span>';
 
 document.getElementById("filterRow").innerHTML =
@@ -43,10 +55,10 @@ const caret = c => `<svg class="caret" width="9" height="6" viewBox="0 0 9 6"><p
 document.getElementById("rows").innerHTML = data.map(r => {
   const [ref,del,due,qty,notes,status,cost,last,gross,overdue] = r;
   const caretColor = overdue ? "#f0303a" : (status === "Quote Rejected" ? "#fff" : "#1f1f1f");
-  return `<tr class="${overdue ? 'overdue' : ''}">
+  return `<tr class="${overdue ? 'overdue' : ''}" data-ref="${ref}" tabindex="0" title="Open job ${ref}">
     <td class="c-chk"><span class="chk"></span></td>
     <td class="c-exp"><span class="exp"><svg width="10" height="7" viewBox="0 0 10 7" fill="none" stroke="#fff" stroke-width="2"><path d="M1 1l4 4 4-4"/></svg></span></td>
-    <td>${ref}</td>
+    <td><a class="ref-link" href="create-job.html?ref=${encodeURIComponent(ref)}">${ref}</a></td>
     <td>${del}</td>
     <td>${due}</td>
     <td>${qty}</td>
@@ -58,3 +70,13 @@ document.getElementById("rows").innerHTML = data.map(r => {
     <td class="c-act"><span class="kebab"><i></i><i></i><i></i></span></td>
   </tr>`;
 }).join("");
+
+// open a job (Edit Job) from its row
+const openJob = tr => { location.href = `create-job.html?ref=${encodeURIComponent(tr.dataset.ref)}`; };
+document.getElementById("rows").addEventListener("click", e => {
+  const tr = e.target.closest("tr[data-ref]");
+  if (tr && !e.target.closest("a, .chk, .kebab")) openJob(tr);
+});
+document.getElementById("rows").addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches("tr[data-ref]")) { e.preventDefault(); openJob(e.target); }
+});

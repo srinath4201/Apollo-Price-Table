@@ -1,5 +1,6 @@
 // Create Job page: header, contact info, Add Product menu, products table, price details.
-// The product popup lives in js/job-product.js (openJobProduct).
+// The product popup lives in js/job-product.js (openJobProduct); Select Report → Quotation lives in js/job-quotes.js.
+// create-job.html?ref=ON5483 opens the same page as Edit Job (job loaded from js/job-store.js).
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -21,7 +22,7 @@ const PRODUCT_GROUPS = [
     ]
   },
   { name: "Soft Furnishing", products: ["Curtain InHouse", "Curtain (Kensington Blinds)", "Romans (Darpan)"] },
-  { name: "Outdoor Products", products: ["Puma S-300 Awning", "Ziptrak Blinds"] },
+  { name: "Outdoor Products", products: ["Markilux 990", "Markilux MX-3", "Markilux 5010", "Markilux MX-4", "Puma S-300 Awning", "Ziptrak Blinds"] },
   { name: "Verts", products: ["Verticals", "Verticals (Arena) EDI Old", "Vertical Louvers only"] },
   { name: "Venetian", products: ["Fauxwood Venetian", "Aluminium Venetian (DEC) EDI", "Timberlux EDI", "Sunwood EDI"] },
   { name: "Shutters", products: ["Shutter New", "Ecowood Plus Shutter"] },
@@ -37,6 +38,11 @@ ProductStore.customProducts().forEach(p => {
 // ---------- Job products ----------
 // { product, group, description, cost, qty, unit, net, vat, data }
 const jobItems = [];
+
+// Quote versions. The current version's items are always the jobItems array itself.
+const job = { quotes: { Q1: { status: "Draft", items: jobItems } }, current: "Q1", activity: [] };
+const quoteIds = () => Object.keys(job.quotes).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+const quoteItems = id => (id === job.current ? jobItems : job.quotes[id].items);
 const expanded = new Set();
 const COLS = [
   { key: "product", cls: "jc-product" },
@@ -66,7 +72,7 @@ function renderJob() {
         <td class="jc-chk"><input type="checkbox" class="jt-chk" data-i="${i}" ${selected.has(i) ? "checked" : ""} aria-label="Select ${esc(it.product)}"></td>
         <td class="jc-exp"><button type="button" class="jt-exp${expanded.has(i) ? " open" : ""}" data-i="${i}" title="Show details">${expIcon}</button></td>
         <td class="left"><button type="button" class="p-link" data-edit="${i}" title="Edit ${esc(it.product)}">${esc(it.product)}</button></td>
-        <td class="left" title="${esc(it.description)}">${esc(it.description)}</td>
+        <td class="left jt-desc" title="${esc(it.description)}">${descCell(it)}</td>
         <td>£ ${money(it.cost)}</td>
         <td>${it.qty}</td>
         <td>£ ${money(it.unit)}</td>
@@ -82,11 +88,21 @@ function renderJob() {
   updateTotals();
 }
 
+// description + location + optional extras (extras come from the quotation flow)
+function descCell(it) {
+  const loc = it.data?.values?.Room || it.data?.values?.Location || "";
+  const extras = (it.extras || []).map(x => x.name).join(", ");
+  return `<span class="jd-main">${esc(it.description)}</span>` +
+    (loc ? `<span class="jd-sub">Location: ${esc(loc)}</span>` : "") +
+    (extras ? `<span class="jd-sub"><b>Extras:</b> ${esc(extras)}</span>` : "");
+}
+
 function detailRow(it) {
   // every filled-in field from the product popup (fields come from Fields and Values)
   const values = Object.entries(it.data.values || {}).filter(([, v]) => v !== "");
   const status = it.data.status ? [["Status", it.data.status]] : [];
-  const pairs = [...values, ...status];
+  const extras = it.extras && it.extras.length ? [["Optional extras", it.extras.map(x => `${x.name} (+£ ${money(x.price)})`).join(", ")]] : [];
+  const pairs = [...values, ...status, ...extras];
   return `<tr class="detail"><td colspan="11"><dl>${pairs.length
     ? pairs.map(([k, v]) => `<div><dt>${esc(k)}:</dt><dd>${esc(v)}</dd></div>`).join("")
     : "<div>No details</div>"}</dl></td></tr>`;
@@ -108,9 +124,6 @@ function updateTotals() {
   const paid = 0;
   $("pPaid").textContent = money(paid);
   $("pOutstanding").textContent = money(net + vat - paid);
-  const btn = $("selectReportBtn");
-  btn.disabled = jobItems.length === 0;
-  btn.title = btn.disabled ? "Add a product first" : "Select report";
 }
 
 // called by js/job-product.js when the product popup is saved
@@ -361,8 +374,58 @@ document.addEventListener("keydown", e => {
   else if (!$("additionalPanel").hidden) $("additionalContacts").click();
 });
 
-// Select Report (enabled once there are products)
-$("selectReportBtn").addEventListener("click", () => flash("Report options will appear here", true));
+// ---------- Quote versions (Q1 ▾ next to Job Ref No) ----------
+const qvMenu = $("quoteVerMenu");
+function renderQuoteVer() {
+  $("quoteVerLabel").textContent = job.current;
+  qvMenu.innerHTML = quoteIds().map(id => `<button type="button" role="menuitemradio" aria-checked="${id === job.current}" data-quote="${id}" class="${id === job.current ? "current" : ""}"><b>${id}</b><span>${esc(job.quotes[id].status)}</span></button>`).join("") +
+    `<button type="button" role="menuitem" class="qv-new" data-quote-new>+ New quote version</button>`;
+}
+function switchQuote(id) {
+  if (!job.quotes[id] || id === job.current) return;
+  job.quotes[job.current].items = jobItems.slice();
+  jobItems.length = 0;
+  jobItems.push(...job.quotes[id].items);
+  job.quotes[id].items = jobItems;
+  job.current = id;
+  selected.clear(); expanded.clear();
+  renderQuoteVer();
+  renderJob();
+}
+// adds a version and returns its id ("Q4")
+function addQuoteVersion(status, items) {
+  const id = "Q" + (Math.max(0, ...quoteIds().map(q => Number(q.slice(1)))) + 1);
+  job.quotes[id] = { status, items };
+  renderQuoteVer();
+  return id;
+}
+$("quoteVerBtn").addEventListener("click", e => {
+  e.stopPropagation();
+  renderQuoteVer();
+  qvMenu.hidden = !qvMenu.hidden;
+  $("quoteVerBtn").setAttribute("aria-expanded", String(!qvMenu.hidden));
+});
+qvMenu.addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  qvMenu.hidden = true;
+  $("quoteVerBtn").setAttribute("aria-expanded", "false");
+  if (b.dataset.quote) { switchQuote(b.dataset.quote); return; }
+  openNewVersion(); // confirm popup in js/job-quotes.js
+});
+document.addEventListener("click", e => { if (!qvMenu.hidden && !e.target.closest(".jh-ref")) { qvMenu.hidden = true; $("quoteVerBtn").setAttribute("aria-expanded", "false"); } });
+
+// ---------- All Activities ----------
+function logActivity(text) {
+  const d = new Date();
+  job.activity.unshift({ text, time: `${todayDMY()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}` });
+  renderActivity();
+}
+function renderActivity() {
+  $("actList").innerHTML = job.activity.map(a => `<div class="act-row"><span title="${esc(a.text)}">${esc(a.text)}</span><time>${esc(a.time)}</time></div>`).join("");
+  $("actList").hidden = !job.activity.length;
+  $("actEmpty").hidden = !!job.activity.length;
+}
 
 // ---------- Save job ----------
 let flashTimer;
@@ -388,8 +451,60 @@ $("jobSave").addEventListener("click", () => {
     return;
   }
   if (!jobItems.length) { flash("Add at least one product", false); return; }
-  flash("Job saved", true);
+  if (!$("jobRef").value.trim()) $("jobRef").value = JobStore.nextRef();
+  const ref = $("jobRef").value.trim();
+  job.quotes[job.current].items = jobItems;
+  JobStore.save({
+    ref, status: $("jobStatus").value, orderStatus: $("orderStatus").value, account: $("accountRef").value.trim(), invoice: $("invoiceNo").value.trim(),
+    order: $("dOrder").value, due: $("dDue").value, created: $("dCreated").value,
+    contact: readContact(), current: job.current, quotes: job.quotes, activity: job.activity
+  });
+  if (!editRef) setEditMode(ref);
+  flash(`Job ${ref} saved`, true);
 });
+
+// ---------- Edit Job (create-job.html?ref=…) ----------
+const CONTACT_IDS = ["cAccountType", "cCompany", "cTitle", "cFirst", "cLast", "cEmail", "cMobile", "cPhone", "cAddress1", "cAddress2", "cTown", "cZip", "cState", "cOrg", "cSource", "cCountry", "cRole", "cCurrency", "jCustomerRef", "jAdditionalRef", "jManager", "jStatusNotes"];
+// older/sample jobs use short keys (first, phone, manager…)
+const CONTACT_ALIAS = { cTitle: "title", cFirst: "first", cLast: "last", cEmail: "email", cMobile: "mobile", cPhone: "phone", cCompany: "company", cAddress1: "address1", cTown: "town", cState: "state", cZip: "zip", jManager: "manager" };
+function readContact() { return Object.fromEntries(CONTACT_IDS.map(id => [id, $(id).value])); }
+function fillContact(c = {}) {
+  CONTACT_IDS.forEach(id => {
+    const v = c[id] ?? c[CONTACT_ALIAS[id]];
+    if (v !== undefined && v !== "") $(id).value = v;
+  });
+}
+let editRef = new URLSearchParams(location.search).get("ref");
+function setEditMode(ref) {
+  editRef = ref;
+  $("pageTitle").textContent = "Edit Job";
+  document.title = `${ref} - Edit Job`;
+  // keep the URL as ?ref=… (some browsers block this on file:// pages; the page still works)
+  if (new URLSearchParams(location.search).get("ref") !== ref) {
+    try { history.replaceState(null, "", `create-job.html?ref=${encodeURIComponent(ref)}`); } catch (e) { /* ignore */ }
+  }
+}
+if (editRef) {
+  const saved = JobStore.load(editRef);
+  $("jobRef").value = saved.ref;
+  $("jobStatus").value = saved.status || "Lead";
+  $("orderStatus").value = saved.orderStatus || "Not confirmed yet";
+  $("accountRef").value = saved.account || "";
+  $("invoiceNo").value = saved.invoice || "";
+  if (saved.created) $("dCreated").value = saved.created;
+  $("dOrder").value = saved.order || "";
+  $("dDue").value = saved.due || "";
+  fillContact(saved.contact);
+  job.quotes = saved.quotes;
+  job.current = job.quotes[saved.current] ? saved.current : quoteIds()[0];
+  jobItems.push(...job.quotes[job.current].items);
+  job.quotes[job.current].items = jobItems;
+  job.activity = saved.activity || [];
+  setEditMode(saved.ref);
+  closeContact();
+}
+renderQuoteVer();
+renderActivity();
 ["cPhone", "jManager"].forEach(id => $(id).addEventListener("input", () => $(id).classList.remove("invalid")));
 $("jManager").addEventListener("change", () => $("jManager").classList.remove("invalid"));
 
