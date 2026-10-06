@@ -112,12 +112,17 @@ body{background:var(--bg);overflow:hidden;display:flex;flex-direction:column}
 .jc-vat{width:73px}
 .jc-menu{width:27px;padding:0 !important}
 .jc-set{width:28px;padding:0 !important}
-.jt-chk{appearance:none;-webkit-appearance:none;width:15px;height:15px;border:1.5px solid #fff;border-radius:2px;background:#fff;position:relative;margin:0;cursor:pointer;vertical-align:middle}
-tbody .jt-chk{border-color:#6f6f6f}
-.jt-chk:checked{background:var(--cyan-dark);border-color:var(--cyan-dark)}
-thead .jt-chk:checked{background:#fff;border-color:#fff}
-.jt-chk:checked::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+/* checkbox (every checkbox on Create / Edit Job and the quotation popups): 16px box, tick centred */
+.jt-chk{appearance:none;-webkit-appearance:none;flex-shrink:0;width:16px;height:16px;border:1.5px solid #9a9ea3;border-radius:3px;background:#fff;position:relative;margin:0;cursor:pointer;vertical-align:middle}
+thead .jt-chk{border-color:#fff}
+.jt-chk:checked,.jt-chk:indeterminate{background:var(--cyan-dark);border-color:var(--cyan-dark)}
+thead .jt-chk:checked,thead .jt-chk:indeterminate{background:#fff;border-color:#fff}
+.jt-chk:checked::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:9px;box-sizing:border-box;border:solid #fff;border-width:0 2px 2px 0;transform:translate(-50%,-62%) rotate(45deg)}
+.jt-chk:indeterminate::after{content:"";position:absolute;left:50%;top:50%;width:8px;height:2px;border-radius:1px;background:#fff;transform:translate(-50%,-50%)}
 thead .jt-chk:checked::after{border-color:var(--cyan-dark)}
+thead .jt-chk:indeterminate::after{background:var(--cyan-dark)}
+.jt-chk:focus-visible{outline:2px solid rgba(18,176,228,.45);outline-offset:1px}
+.jt-chk:disabled{opacity:.45;cursor:not-allowed}
 .jt-expall,.jt-set{width:17px;height:17px;border:1px solid var(--pink);border-radius:3px;background:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;vertical-align:middle}
 .jt-set{width:22px;height:22px}
 .jt-search{position:relative;display:flex;align-items:center;justify-content:flex-start;padding-left:4px}

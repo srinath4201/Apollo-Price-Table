@@ -26,14 +26,14 @@
 .act-row time{flex-shrink:0;font-size:11.5px;color:#777}
 
 /* ---------- popup frame (same look as the other popups) ---------- */
-.qt-overlay{padding:70px 16px 16px}
+.qt-overlay{padding:16px;align-items:center;justify-content:center}
 #qtTypeModal,#qtVersionsModal{z-index:300}
 #iqModal{z-index:310}
 #rpView{z-index:320}
 #emModal{z-index:340}
 #emSentModal{z-index:350}
 #termsModal{z-index:360}
-.qm{position:relative;background:#fff;border-radius:6px;box-shadow:0 6px 24px rgba(0,0,0,.25);display:flex;flex-direction:column;max-height:calc(100vh - 86px);width:640px;max-width:100%}
+.qm{position:relative;background:#fff;border-radius:6px;box-shadow:0 6px 24px rgba(0,0,0,.25);display:flex;flex-direction:column;max-height:calc(100vh - 32px);width:640px;max-width:100%;margin:auto}
 .qm-head{min-height:42px;flex-shrink:0;display:flex;align-items:center;gap:14px;padding:0 46px 0 10px;border-bottom:2px solid var(--pink)}
 .qm-head h3{font-size:14px;font-weight:500;color:var(--pink);white-space:nowrap}
 .iq-sub{font-size:12px;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -72,12 +72,9 @@
 .qg th:first-child,.qg td:first-child{text-align:center;padding:0}
 .qg tbody tr:hover td{background:#eaf3fb}
 .qg tr.dim td{color:#9a9ea3}
-.qg .jt-chk:disabled{opacity:.4;cursor:not-allowed}
-.qm .jt-chk,.rp-view .jt-chk{border-color:#6f6f6f}
-.qm thead .jt-chk{border-color:#fff}
 
 /* ---------- 3. Interactive Quotes ---------- */
-.iq{width:min(1180px,100%);height:calc(100vh - 86px)}
+.iq{width:min(1180px,100%);height:calc(100vh - 32px)}
 .iq-cust-bar{display:none}
 .iq-body{flex:1;min-height:0;display:flex}
 .iq-side{width:220px;flex-shrink:0;background:#f5f6f8;border-right:1px solid var(--line);padding:12px 10px;overflow-y:auto}
@@ -202,8 +199,8 @@
 .rp-close{margin-left:auto}
 .rp-select{flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 14px;background:#fff;border-bottom:1px solid #d9dcdf}
 .rp-sel-lbl{font-size:12.5px;font-weight:600;color:#111}
-.rp-chip{display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 10px;border:1px solid #d9dcdf;border-radius:3px;font-size:12.5px;color:#222;cursor:pointer}
-.rp-chip.on{border-color:var(--cyan-dark);background:#e5f4fb;color:#0e7fa8;font-weight:600}
+.rp-chip{display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 10px;border:1px solid #d9dcdf;border-radius:3px;font-size:12.5px;font-weight:500;color:#222;cursor:pointer}
+.rp-chip.on{border-color:var(--cyan-dark);background:#e5f4fb;color:#0e7fa8}
 .rp-sel-count{margin-left:auto;font-size:12px;color:#777}
 .rp-pages{flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;gap:18px;padding:20px}
 .rp-pages::-webkit-scrollbar{width:8px}
@@ -251,7 +248,7 @@
 }
 
 /* mandatory / selected extras */
-.iq-badge{display:inline-block;margin-top:5px;padding:1px 7px;border-radius:9px;background:#eaf6e4;color:#3f9b23;font-size:10.5px;font-weight:600;font-style:normal}
+.iq-badge{display:inline-block;margin-left:6px;vertical-align:1px;line-height:14px;padding:0 6px;border-radius:9px;background:#eaf6e4;color:#3f9b23;font-size:10.5px;font-weight:600;font-style:normal}
 .iq-badge.req{background:#fde4ef;color:#c2185b}
 .iq-x.req{border-color:#f3a9cc;background:#fff7fb;cursor:default}
 .iq-x .jt-chk:disabled{opacity:.6;cursor:not-allowed}
@@ -292,3 +289,14 @@
 .cp-diff-cell{background:#fff6e5}
 .cp-left{margin-right:auto}
 .cp-left + .qm-error{margin-right:0}
+
+/* checkbox + text rows line up on the middle */
+.iq-ver,.iq-all,.iq-checks label,.em-check,.rp-chip,.rp-page-inc{align-items:center}
+.iq-x{align-items:center}
+.iq-card-main{align-items:center}
+.iq-card-main .jt-chk{margin-top:0}
+
+/* extras keep the same size when ticked: selection is shown by the tick and the pink border only */
+.iq-x{min-height:52px}
+.iq-x b,.iq-x small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iq-x > span{min-width:0}

@@ -366,7 +366,7 @@
           <div class="iq-extras"><span class="iq-x-title">Optional extras</span>
             <div class="iq-x-grid">${opts.map(o => {
               const on = !!set && (set.has(o.id) || o.mandatory);
-              return `<label class="iq-x ${on ? "on" : ""} ${o.mandatory ? "req" : ""}"><input type="checkbox" class="jt-chk" data-p="${i}" data-x="${o.id}" ${on ? "checked" : ""} ${o.mandatory && set ? "disabled" : ""}><span><b>${esc(o.name)}</b><small>${esc(o.desc || "")}</small>${o.mandatory ? `<i class="iq-badge req">Mandatory – included</i>` : on ? `<i class="iq-badge">${iq.mode === "customer" ? "Selected" : "Rep selected"}</i>` : ""}</span><em>+${gbp(o.price)}</em></label>`;
+              return `<label class="iq-x ${on ? "on" : ""} ${o.mandatory ? "req" : ""}"><input type="checkbox" class="jt-chk" data-p="${i}" data-x="${o.id}" ${on ? "checked" : ""} ${o.mandatory && set ? "disabled" : ""}><span><b>${esc(o.name)}${o.mandatory ? ` <i class="iq-badge req" title="Always included with this product">Mandatory</i>` : on ? ` <i class="iq-badge">${iq.mode === "customer" ? "Selected" : "Rep selected"}</i>` : ""}</b><small>${esc(o.desc || "")}</small></span><em>+${gbp(o.price)}</em></label>`;
             }).join("")}</div>
           </div>
         </article>`;
