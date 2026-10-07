@@ -25,10 +25,8 @@
 .copilot:focus-visible{outline:2px solid #c7cdf5;outline-offset:2px}
 .copilot.bmc-on{border-color:#8f9af5;box-shadow:0 0 0 2px rgba(91,108,240,.35),0 8px 6px #161b31 inset}
 
-/* backdrop below the top bar */
-.bmc-backdrop{position:fixed;left:0;right:0;top:56px;bottom:0;background:rgba(20,22,40,.32);z-index:900;opacity:0;transition:opacity .2s}
-.bmc-backdrop.show{opacity:1}
-.bmc-panel[hidden],.bmc-backdrop[hidden]{display:none}
+/* no dark overlay: the panel sits beside the page and the page stays usable */
+.bmc-panel[hidden]{display:none}
 .bmc-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* panel */
@@ -36,6 +34,7 @@
   box-shadow:-6px 0 24px rgba(0,0,0,.14);font-family:"Inter",sans-serif;color:var(--bmc-ink);transform:translateX(100%);transition:transform .22s ease,width .25s ease}
 .bmc-panel.show{transform:none}
 .bmc-panel.full{width:100vw;box-shadow:none}
+.bmc-instant{transition:none !important}
 .bmc-panel button{font-family:inherit}
 
 /* header */
@@ -196,12 +195,8 @@
 .bmc-tasks{list-style:none;padding:0 !important}
 .bmc-tasks li{padding:6px 0 !important;margin:0 !important;border-bottom:1px solid var(--bmc-line)}
 .bmc-tasks li:last-child{border-bottom:none}
-.bmc-tasks label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
-.bmc-tasks input{appearance:none;-webkit-appearance:none;width:16px;height:16px;flex-shrink:0;margin-top:4px;border:1.5px solid #9a9ea3;border-radius:3px;background:#fff;position:relative;cursor:pointer}
-.bmc-tasks input:checked{background:var(--bmc-cyan);border-color:var(--bmc-cyan)}
-.bmc-tasks input:checked::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:9px;box-sizing:border-box;border:solid #fff;border-width:0 2px 2px 0;transform:translate(-50%,-62%) rotate(45deg)}
-.bmc-tasks input:focus-visible{outline:2px solid var(--bmc-purple);outline-offset:2px}
-.bmc-tasks input:checked + span{color:var(--bmc-mute);text-decoration:line-through}
+.bmc-tasks input{display:none} /* chats saved before the checkboxes were removed */
+.bmc-tasks label{cursor:default}
 
 /* bar chart */
 .bmc-chart{border:1px solid var(--bmc-line);border-radius:10px;padding:14px 16px 10px;margin:4px 0 14px;background:#fff}
@@ -299,6 +294,6 @@
   .bmc-effort-btn [data-effort-label]{display:none}
 }
 @media (prefers-reduced-motion:reduce){
-  .bmc-panel,.bmc-backdrop,.bmc-ai-body .bmc-fade,.bmc-bar,.bmc-thinking,.bmc-caret,.bmc-msg-ai.is-busy .bmc-mark svg,.bmc-mic.listening{transition:none;animation:none}
+  .bmc-panel,.bmc-ai-body .bmc-fade,.bmc-bar,.bmc-thinking,.bmc-caret,.bmc-msg-ai.is-busy .bmc-mark svg,.bmc-mic.listening{transition:none;animation:none}
   .bmc-thinking{color:var(--bmc-mute);background:none}
 }

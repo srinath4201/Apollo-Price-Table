@@ -226,8 +226,8 @@
     if (/task|to.?do/.test(q)) return {
       plan: "I'll list the tasks due today, highest priority first.",
       blocks: [
-        `<p>You have <b>${TASKS.length} tasks</b> due today. Tick them off as you go.</p>`,
-        `<ul class="bmc-tasks">${TASKS.map(([t, ref, p]) => `<li><label><input type="checkbox" aria-label="${esc(t)}"><span>${esc(t)} · ${jobLink(ref)} ${pill(p)}</span></label></li>`).join("")}</ul>`
+        `<p>You have <b>${TASKS.length} tasks</b> due today.</p>`,
+        `<ul class="bmc-tasks">${TASKS.map(([t, ref, p]) => `<li>${esc(t)} · ${jobLink(ref)} ${pill(p)}</li>`).join("")}</ul>`
       ],
       chips: ["Overdue jobs", "Today's appointments."],
       note: `Filtered tasks due ${todayDMY}.`
@@ -270,19 +270,16 @@
   }
 
   // ---------- markup ----------
-  const backdrop = document.createElement("div");
-  backdrop.className = "bmc bmc-backdrop";
-  backdrop.hidden = true;
+  // no dark overlay: the chat sits beside the page and the page stays usable
   const panel = document.createElement("aside");
   panel.className = "bmc bmc-panel";
   panel.hidden = true;
   panel.setAttribute("role", "dialog");
-  panel.setAttribute("aria-modal", "true");
   panel.setAttribute("aria-labelledby", "bmcTitle");
   panel.innerHTML = `
     <header class="bmc-head">
       ${I.spark(22)}
-      <h2 id="bmcTitle">BM Copilot</h2><span class="bmc-beta">Beta</span>
+      <h2 id="bmcTitle">BM Copilot</h2><span class="bmc-beta">New</span>
       <span class="bmc-spacer"></span>
       <button type="button" class="bmc-ib" data-act="expand" title="Full screen" aria-pressed="false">${I.expand}</button>
       <button type="button" class="bmc-ib" data-act="history" title="Chat history" aria-pressed="false">${I.history()}<span class="bmc-count" data-count>0</span></button>
@@ -335,7 +332,7 @@
       </div>
     </div>
     <div class="bmc-sr" data-live aria-live="polite"></div>`;
-  document.body.append(backdrop, panel);
+  document.body.appendChild(panel);
   const tip = document.createElement("div");
   tip.className = "bmc-tip";
   tip.hidden = true;
@@ -400,32 +397,35 @@
   }
 
   // ---------- open / close ----------
-  function open() {
-    backdrop.hidden = false;
+  // instant = reopened after following a link in the chat: shown straight away, no slide-in
+  function open({ instant = false } = {}) {
     panel.hidden = false;
     applyLayout();
     render();
-    requestAnimationFrame(() => { backdrop.classList.add("show"); panel.classList.add("show"); });
+    if (instant) {
+      panel.classList.add("bmc-instant", "show");
+      requestAnimationFrame(() => requestAnimationFrame(() => panel.classList.remove("bmc-instant")));
+    } else {
+      requestAnimationFrame(() => panel.classList.add("show"));
+    }
     trigger.classList.add("bmc-on");
     trigger.setAttribute("aria-expanded", "true");
-    setTimeout(() => (view === "chat" ? input : panel.querySelector("button")).focus(), 60);
+    setTimeout(() => (view === "chat" ? input : panel.querySelector("button")).focus({ preventScroll: true }), 60);
   }
   function close() {
     if (run) run.stop();
     stopSpeaking();
     closeMenus();
-    backdrop.classList.remove("show");
     panel.classList.remove("show");
     trigger.classList.remove("bmc-on");
     trigger.setAttribute("aria-expanded", "false");
     hideTip();
-    setTimeout(() => { if (!panel.classList.contains("show")) { panel.hidden = true; backdrop.hidden = true; } }, 220);
+    setTimeout(() => { if (!panel.classList.contains("show")) panel.hidden = true; }, 220);
     trigger.focus();
   }
   const isOpen = () => !panel.hidden && panel.classList.contains("show");
   trigger.addEventListener("click", () => (isOpen() ? close() : open()));
   trigger.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); trigger.click(); } });
-  backdrop.addEventListener("click", close);
   document.addEventListener("keydown", e => {
     if (e.key !== "Escape" || !isOpen()) return;
     const openMenu = MENUS().find(([m]) => !m.hidden);
@@ -458,7 +458,7 @@
         <h3>What can I help with?</h3>
         <p>BM Copilot is using data from job, account, appointments and task. Ask me to analyze, summarize, or predict.</p>
       </div>`;
-    const feature = `<button type="button" class="bmc-sug bmc-feature" data-act="suggest"><span class="bmc-fic">${I.spark(16)}</span><span>Suggest a BM Copilot feature<small>Share an idea while BM Copilot is in Beta</small></span>${I.chevR}</button>`;
+    const feature = `<button type="button" class="bmc-sug bmc-feature" data-act="suggest"><span class="bmc-fic">${I.spark(16)}</span><span>Suggest a BM Copilot feature<small>Share an idea while BM Copilot is new</small></span>${I.chevR}</button>`;
     if (layout.full) {
       // full screen: greeting and composer in the middle, suggestions underneath (ChatGPT / Gemini start page)
       body.innerHTML = `<div class="bmc-wrap bmc-empty">${hero}</div>`;
@@ -620,7 +620,7 @@
       const holder = document.createElement("div");
       holder.innerHTML = html;
       const nodes = [...holder.children];
-      const rich = nodes.some(n => n.matches("table, .bmc-chart, .bmc-tasks") || n.querySelector("table, .bmc-chart, input"));
+      const rich = nodes.some(n => n.matches("table, .bmc-chart") || n.querySelector("table, .bmc-chart"));
       if (rich) {
         nodes.forEach(n => n.classList.add("bmc-fade"));
         stick(() => nodes.forEach(n => out.appendChild(n))); // measure "near bottom" before the block adds its height
@@ -809,6 +809,12 @@
   function newChat() { if (run) run.stop(); chat = null; view = "chat"; render(); renderList(); input.focus(); }
 
   panel.addEventListener("click", e => {
+    // a link inside an answer (e.g. a job number) opens that page with this chat still open
+    const link = e.target.closest(".bmc-ai-body a[href]");
+    if (link) {
+      if (e.button === 0 && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) keepOpenAfterLoad(link);
+      return;
+    }
     const askBtn = e.target.closest("[data-ask]");
     if (askBtn) { ask(askBtn.dataset.ask); return; }
     const openBtn = e.target.closest("[data-open]");
@@ -911,4 +917,44 @@
   panel.addEventListener("mouseout", e => { if (e.target.closest("[data-tip]")) hideTip(); });
   panel.addEventListener("focusin", e => { const el = e.target.closest("[data-tip]"); if (el) showTip(el); });
   panel.addEventListener("focusout", hideTip);
+
+  // ---------- keep the chat open across a link click ----------
+  // sessionStorage = this browser tab only; the note expires after a minute so an old one never reopens the chat
+  // The note also records which message held the link and where it sat in the chat, so the next page shows
+  // the chat at the same place instead of jumping to the start.
+  const RESUME = "bm.copilot.resume";
+  function keepOpenAfterLoad(link) {
+    if (run) run.stop(); // save what has been written so far
+    const msg = link.closest("[data-index]");
+    const note = {
+      chat: chat ? chat.id : null,
+      at: Date.now(),
+      index: msg ? Number(msg.dataset.index) : null,
+      offset: msg ? msg.getBoundingClientRect().top - body.getBoundingClientRect().top : 0,
+      scrollTop: body.scrollTop
+    };
+    try { sessionStorage.setItem(RESUME, JSON.stringify(note)); } catch (e) { /* storage blocked */ }
+  }
+  function restoreScroll(note) {
+    const msg = note.index == null ? null : [...body.querySelectorAll(".bmc-thread > [data-index]")].find(n => Number(n.dataset.index) === note.index);
+    if (msg) body.scrollTop += msg.getBoundingClientRect().top - body.getBoundingClientRect().top - note.offset;
+    else body.scrollTop = note.scrollTop || 0;
+    syncDown();
+  }
+  let resume = null;
+  try { resume = JSON.parse(sessionStorage.getItem(RESUME)); sessionStorage.removeItem(RESUME); } catch (e) { resume = null; }
+  if (resume && Date.now() - resume.at < 60000) {
+    chat = chats.find(c => c.id === resume.chat) || null;
+    if (layout.full) layout.full = false; // full screen would hide the page that was just opened
+    panel.style.visibility = "hidden";   // stay invisible until styled and scrolled into place
+    open({ instant: true });
+    const css = document.querySelector("link[data-bmc]");
+    let shown = false;
+    const show = () => {
+      if (shown) return;
+      shown = true;
+      requestAnimationFrame(() => { restoreScroll(resume); panel.style.visibility = ""; });
+    };
+    if (css && !css.sheet) { css.addEventListener("load", show); css.addEventListener("error", show); setTimeout(show, 1500); } else show();
+  }
 })();
