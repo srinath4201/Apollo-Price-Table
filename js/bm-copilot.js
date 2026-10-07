@@ -454,26 +454,17 @@
 
   function renderWelcome() {
     const hero = `<div class="bmc-hero">
-        <span class="bmc-hero-ic">${I.spark(layout.full ? 30 : 26)}</span>
+        <span class="bmc-hero-ic">${I.spark(30)}</span>
         <h3>What can I help with?</h3>
         <p>BM Copilot is using data from job, account, appointments and task. Ask me to analyze, summarize, or predict.</p>
       </div>`;
     const feature = `<button type="button" class="bmc-sug bmc-feature" data-act="suggest"><span class="bmc-fic">${I.spark(16)}</span><span>Suggest a BM Copilot feature<small>Share an idea while BM Copilot is new</small></span>${I.chevR}</button>`;
-    if (layout.full) {
-      // full screen: greeting and composer in the middle, suggestions underneath (ChatGPT / Gemini start page)
-      body.innerHTML = `<div class="bmc-wrap bmc-empty">${hero}</div>`;
-      after.innerHTML = `<div class="bmc-wrap bmc-try-full">
-        <div class="bmc-chiprow">${[...SUGGESTIONS, "Account with highest job count."].map(s => `<button type="button" class="bmc-sugchip" data-ask="${esc(s)}">${I.wand(16)}<span>${esc(s)}</span></button>`).join("")}</div>
-        ${feature}</div>`;
-      after.hidden = false;
-    } else {
-      body.innerHTML = `<div class="bmc-wrap bmc-empty">${hero}
-        <div class="bmc-try">
-          <div class="bmc-try-title">TRY ASKING</div>
-          ${SUGGESTIONS.map(s => `<button type="button" class="bmc-sug" data-ask="${esc(s)}">${I.wand(20)}<span>${esc(s)}</span></button>`).join("")}
-          ${feature}
-        </div></div>`;
-    }
+    // side panel and full screen alike: greeting and composer in the middle, suggestions underneath
+    body.innerHTML = `<div class="bmc-wrap bmc-empty">${hero}</div>`;
+    after.innerHTML = `<div class="bmc-wrap bmc-try-full">
+      <div class="bmc-chiprow">${[...SUGGESTIONS, "Account with highest job count."].map(s => `<button type="button" class="bmc-sugchip" data-ask="${esc(s)}">${I.wand(16)}<span>${esc(s)}</span></button>`).join("")}</div>
+      ${feature}</div>`;
+    after.hidden = false;
   }
 
   // history sidebar, grouped by date

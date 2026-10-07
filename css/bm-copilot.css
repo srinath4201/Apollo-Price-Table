@@ -107,8 +107,6 @@
 .bmc-hero-ic{width:70px;height:70px;border-radius:50%;background:#f1f2f5;display:inline-flex;align-items:center;justify-content:center;margin-bottom:22px}
 .bmc-hero h3{font-size:18px;font-weight:600;margin-bottom:12px}
 .bmc-hero p{font-size:14px;line-height:1.5;color:var(--bmc-sub);max-width:420px;margin:0 auto}
-.bmc-try{margin-top:auto;padding-top:56px}
-.bmc-try-title{font-size:15px;font-weight:500;letter-spacing:.6px;color:var(--bmc-sub);margin-bottom:12px}
 .bmc-sug{width:100%;display:flex;align-items:center;gap:12px;min-height:46px;padding:10px 14px;margin-bottom:10px;border:1px solid var(--bmc-line);border-radius:10px;background:var(--bmc-card);
   font-size:14px;font-weight:500;color:var(--bmc-ink);text-align:left;cursor:pointer;transition:border-color .15s,background .15s}
 .bmc-sug:hover{border-color:var(--bmc-purple-line);background:#fff}
@@ -121,12 +119,14 @@
 .bmc-feature small{font-size:13.5px;font-weight:400;color:var(--bmc-sub)}
 
 /* full screen + new chat: greeting and composer centred, suggestions underneath */
-.bmc-panel.full .bmc-col.is-empty{justify-content:center;padding-bottom:6vh}
-.bmc-panel.full .bmc-col.is-empty .bmc-body{flex:none;overflow:visible}
-.bmc-panel.full .bmc-col.is-empty .bmc-empty{padding:0 20px 28px}
-.bmc-panel.full .bmc-col.is-empty .bmc-hero h3{font-size:28px;font-weight:600;letter-spacing:-.3px}
-.bmc-panel.full .bmc-col.is-empty .bmc-hero-ic{width:64px;height:64px;margin-bottom:18px}
-.bmc-panel.full .bmc-col.is-empty .bmc-foot{border-top:none;padding-top:0}
+/* new chat (side panel and full screen): greeting and composer centred, suggestions underneath */
+.bmc-col.is-empty{justify-content:center;padding:16px 0 6vh;overflow-y:auto}
+.bmc-col.is-empty .bmc-body{flex:none;overflow:visible}
+.bmc-col.is-empty .bmc-empty{padding:0 20px 24px}
+.bmc-col.is-empty .bmc-hero h3{font-size:24px;font-weight:600;letter-spacing:-.3px}
+.bmc-panel.full .bmc-col.is-empty .bmc-hero h3{font-size:28px}
+.bmc-col.is-empty .bmc-hero-ic{width:64px;height:64px;margin-bottom:18px}
+.bmc-col.is-empty .bmc-foot{border-top:none;padding-top:0}
 .bmc-after[hidden]{display:none}
 .bmc-try-full{padding-top:6px}
 .bmc-chiprow{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:16px}
@@ -289,7 +289,6 @@
   .bmc-wrap,.bmc-panel.full .bmc-foot-in{padding:0 14px}
   .bmc-foot{padding:8px 10px 6px}
   .bmc-head h2{font-size:16px}
-  .bmc-try{padding-top:32px}
   .bmc-msg-ai{gap:10px}
   .bmc-effort-btn [data-effort-label]{display:none}
 }
