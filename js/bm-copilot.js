@@ -325,10 +325,10 @@
                 <button type="submit" class="bmc-send" data-send title="Send" aria-label="Send" disabled>${I.send}</button>
               </div>
             </form>
-            <p class="bmc-disclaimer">BM Copilot can make mistakes. Verify important info.</p>
           </div>
         </footer>
         <div class="bmc-after" data-after hidden></div>
+        <p class="bmc-disclaimer">BM Copilot can make mistakes. Verify important info.</p>
       </div>
     </div>
     <div class="bmc-sr" data-live aria-live="polite"></div>`;
@@ -458,7 +458,7 @@
         <h3>What can I help with?</h3>
         <p>BM Copilot is using data from job, account, appointments and task. Ask me to analyze, summarize, or predict.</p>
       </div>`;
-    const feature = `<button type="button" class="bmc-sug bmc-feature" data-act="suggest"><span class="bmc-fic">${I.spark(16)}</span><span>Suggest a BM Copilot feature<small>Share an idea while BM Copilot is new</small></span>${I.chevR}</button>`;
+    const feature = `<button type="button" class="bmc-sug bmc-feature" data-act="suggest"><span class="bmc-fic">${I.spark(16)}</span><span>Suggest a BM Copilot feature<small>Share an idea for BM Copilot</small></span>${I.chevR}</button>`;
     // side panel and full screen alike: greeting and composer in the middle, suggestions underneath
     body.innerHTML = `<div class="bmc-wrap bmc-empty">${hero}</div>`;
     after.innerHTML = `<div class="bmc-wrap bmc-try-full">
